@@ -752,11 +752,6 @@ input:focus-visible {
 .role-talk.role-chip { background: var(--coral); color: var(--ink); }
 .role-draw.role-chip { background: var(--grape); color: #fff; }
 
-.chip-avatar {
-  width: calc(42px + 16 * var(--k));
-  height: calc(42px + 16 * var(--k));
-}
-
 .role-chip-text {
   font-size: calc(20px + 6 * var(--k));
   font-weight: 700;
@@ -984,7 +979,7 @@ input:focus-visible {
   background: var(--coral);
   box-shadow: 0 9px 0 var(--ink);
   font-size: calc(34px + 14 * var(--k));
-  --icon: calc(60px + 24 * var(--k));
+  --icon: calc(76px + 28 * var(--k));
 }
 
 .speaker-strip {
@@ -1099,7 +1094,7 @@ input:focus-visible {
   background: var(--sun);
   box-shadow: 0 8px 0 var(--ink);
   font-size: calc(28px + 16 * var(--k));
-  --icon: calc(50px + 22 * var(--k));
+  --icon: calc(62px + 24 * var(--k));
 }
 
 .done-button {
@@ -1108,7 +1103,7 @@ input:focus-visible {
   background: var(--mint);
   box-shadow: 0 8px 0 var(--ink);
   font-size: calc(28px + 18 * var(--k));
-  --icon: calc(46px + 18 * var(--k));
+  --icon: calc(60px + 22 * var(--k));
 }
 
 /* iPhone design: icons sit above the labels and the selected color ring is drawn inside. */

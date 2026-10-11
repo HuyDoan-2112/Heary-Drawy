@@ -26,17 +26,15 @@ export interface TalkControls {
 
 const fixtureTalk: TalkControls = { holding: false, start: () => undefined, stop: () => undefined };
 
-function TopBar({ role, selfAvatarId }: { role: Role; selfAvatarId: string }) {
-  const phone = useIsPhone();
+function TopBar({ role }: { role: Role }) {
   const label = role === 'talk' ? 'You talk' : 'You draw';
   return (
     <header className="play-top">
       <MusicButton quiet />
       <div className={`role-chip role-${role}`} role="img" aria-label={label}>
-        <Avatar id={selfAvatarId} className="chip-avatar" />
+        {/* Just the activity: the character face made the chip too busy. */}
         {role === 'talk' ? <MicIcon strokeWidth={2.2} /> : <PencilIcon strokeWidth={2.2} />}
-        {/* The iPhone design shows only the avatar and icon. */}
-        {phone ? null : <span className="role-chip-text">{label}</span>}
+        <span className="role-chip-text">{label}</span>
       </div>
       {/* Fixture: round timing and time-up behavior are not decided yet. */}
       <div className="time-left" role="img" aria-label="Time left">
@@ -83,14 +81,13 @@ function HoldToTalk({ partner, className, talk }: { partner: string; className: 
       }}
       onContextMenu={(event) => event.preventDefault()}
     >
+      {/* Symbol only: children know the mic; the label stays for screen readers. */}
       <MicIcon strokeWidth={2} />
-      Hold to talk
     </button>
   );
 }
 
 export interface SpeakerPlayProps {
-  selfAvatarId: string;
   teammate: Teammate;
   picture: ReactNode;
   strokes: FixtureStroke[];
@@ -98,13 +95,13 @@ export interface SpeakerPlayProps {
   talk: TalkControls;
 }
 
-export function SpeakerPlayView({ selfAvatarId, teammate, picture, strokes, teammateTalking, talk }: SpeakerPlayProps) {
+export function SpeakerPlayView({ teammate, picture, strokes, teammateTalking, talk }: SpeakerPlayProps) {
   const phone = useIsPhone();
 
   return (
     <Page className="play-page speaker-page">
       <h1 className="sr-only">You talk</h1>
-      <TopBar role="talk" selfAvatarId={selfAvatarId} />
+      <TopBar role="talk" />
       <section className="photo-card" aria-label="Photo">
         <div className="photo-chip">
           <CameraIcon strokeWidth={2.2} />
@@ -140,7 +137,6 @@ export function SpeakerPlayView({ selfAvatarId, teammate, picture, strokes, team
 export function SpeakerPlayScreen() {
   return (
     <SpeakerPlayView
-      selfAvatarId={SPEAKER.avatarId}
       teammate={DRAWER}
       picture={<SpinningApple />}
       strokes={fixtureDrawing}
@@ -151,7 +147,6 @@ export function SpeakerPlayScreen() {
 }
 
 export interface DrawerPlayProps {
-  selfAvatarId: string;
   teammate: Teammate;
   strokes: FixtureStroke[];
   teammateTalking: boolean;
@@ -163,20 +158,15 @@ export interface DrawerPlayProps {
   onDone?: () => void;
 }
 
-export function DrawerPlayView({ selfAvatarId, teammate, strokes, teammateTalking, talk, onStroke, onUndo, onClear, onDone }: DrawerPlayProps) {
+export function DrawerPlayView({ teammate, strokes, teammateTalking, talk, onStroke, onUndo, onClear, onDone }: DrawerPlayProps) {
   const phone = useIsPhone();
   const [color, setColor] = useState<string>(palette[0].color);
-  const doneContent = (
-    <>
-      <CheckIcon strokeWidth={2.8} />
-      Done!
-    </>
-  );
+  const doneContent = <CheckIcon strokeWidth={2.8} />;
 
   return (
     <Page className="play-page drawer-page">
       <h1 className="sr-only">You draw</h1>
-      <TopBar role="draw" selfAvatarId={selfAvatarId} />
+      <TopBar role="draw" />
       <div className="speaker-strip" role="img" aria-label={teammateTalking ? `${teammate.name} is talking` : teammate.name}>
         <Avatar id={teammate.avatarId} className="strip-avatar" />
         {teammateTalking ? <TalkBars count={phone ? 7 : 11} className="bars-strip" /> : null}
@@ -230,7 +220,6 @@ export function DrawerPlayScreen() {
   const [strokes, setStrokes] = useState<FixtureStroke[]>(fixtureDrawing);
   return (
     <DrawerPlayView
-      selfAvatarId={DRAWER.avatarId}
       teammate={SPEAKER}
       strokes={strokes}
       teammateTalking

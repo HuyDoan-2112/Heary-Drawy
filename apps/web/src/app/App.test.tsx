@@ -159,7 +159,12 @@ describe('approved screen flow', () => {
     setViewport(390, 844);
     renderAt('/play/drawer');
 
-    expect(screen.getByRole('img', { name: 'You draw' })).not.toHaveTextContent('You draw');
+    // The role chip shows the activity icon and words, without the character face.
+    expect(screen.getByRole('img', { name: 'You draw' })).toHaveTextContent('You draw');
+    expect(document.querySelector('.role-chip .artwork')).toBeNull();
+    // Talk and Done are symbols only; their names stay for screen readers.
+    expect(screen.getByRole('button', { name: /Hold to talk/ })).toHaveTextContent('');
+    expect(screen.getByRole('link', { name: 'Done' })).toHaveTextContent('');
     expect(screen.getByRole('button', { name: 'Undo' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Clear the drawing. Asks first' })).not.toBeInTheDocument();
   });
