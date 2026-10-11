@@ -1,0 +1,14 @@
+{
+  "protocol_version": 1,
+  "type": "drawing.updated",
+  "event_id": "event-drawing-001",
+  "round_id": "round-demo-1",
+  "payload": {
+    "round_id": "round-demo-1",
+    "revision": 4,
+    "operation": {
+      "kind": "stroke.end",
+      "stroke_id": "stroke-1"
+    }
+  }
+}

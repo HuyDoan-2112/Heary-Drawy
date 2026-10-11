@@ -1,0 +1,59 @@
+{
+  "snapshot_id": "snapshot-reveal-feedback-001",
+  "session_player_id": "player-kiwi",
+  "room": {
+    "room_id": "room-demo",
+    "pair_id": "pair-demo",
+    "participant": {
+      "player_id": "player-kiwi",
+      "nickname": "Kiwi",
+      "avatar_id": "kiwi",
+      "connection_status": "connected"
+    },
+    "teammate": {
+      "player_id": "player-mango",
+      "nickname": "Mango",
+      "avatar_id": "mango",
+      "connection_status": "connected"
+    }
+  },
+  "round": {
+    "round_id": "round-demo-1",
+    "role": "drawer",
+    "phase": "feedback",
+    "phase_version": 4,
+    "permissions": ["view_object", "view_drawing", "view_feedback"]
+  },
+  "drawing": {
+    "round_id": "round-demo-1",
+    "revision": 8,
+    "strokes": []
+  },
+  "voice": {
+    "mic_permission": "granted",
+    "active_local_hold_ids": [],
+    "remote_speaking_player_ids": [],
+    "provider_available": false
+  },
+  "object_access": {
+    "object_id": "object-demo-revealed",
+    "display_name": "revealed reference",
+    "image_url": "fixture://revealed-reference-image",
+    "model_url": "fixture://revealed-reference-model"
+  },
+  "feedback": {
+    "shared_result": {
+      "status": "neutral_unscored",
+      "stars": null,
+      "child_summary": "Drawy had trouble checking this one, but you still finished the round together!"
+    },
+    "role_feedback": {
+      "role": "drawer",
+      "lines": [
+        "You listened for the big shape.",
+        "Let's look at the picture and try another one."
+      ]
+    },
+    "sticker_id": "sticker-teamwork"
+  }
+}

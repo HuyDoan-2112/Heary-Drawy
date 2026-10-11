@@ -1,0 +1,48 @@
+{
+  "snapshot_id": "snapshot-drawer-collaborating-001",
+  "session_player_id": "player-kiwi",
+  "room": {
+    "room_id": "room-demo",
+    "pair_id": "pair-demo",
+    "participant": {
+      "player_id": "player-kiwi",
+      "nickname": "Kiwi",
+      "avatar_id": "kiwi",
+      "connection_status": "connected"
+    },
+    "teammate": {
+      "player_id": "player-mango",
+      "nickname": "Mango",
+      "avatar_id": "mango",
+      "connection_status": "connected"
+    }
+  },
+  "round": {
+    "round_id": "round-demo-1",
+    "role": "drawer",
+    "phase": "collaborating",
+    "phase_version": 2,
+    "permissions": ["edit_drawing", "hold_to_talk"]
+  },
+  "drawing": {
+    "round_id": "round-demo-1",
+    "revision": 3,
+    "strokes": [
+      {
+        "stroke_id": "stroke-1",
+        "color": "#2f5dff",
+        "width": 8,
+        "points": [
+          {"x": 0.31, "y": 0.44},
+          {"x": 0.38, "y": 0.48}
+        ]
+      }
+    ]
+  },
+  "voice": {
+    "mic_permission": "granted",
+    "active_local_hold_ids": [],
+    "remote_speaking_player_ids": ["player-mango"],
+    "provider_available": false
+  }
+}

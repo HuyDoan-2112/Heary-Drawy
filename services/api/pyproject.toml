@@ -1,0 +1,20 @@
+[project]
+name = "heary-drawy-api"
+version = "0.1.0"
+description = "FastAPI foundation for Heary Drawy"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi==0.119.0",
+  "pydantic==2.12.2",
+  "uvicorn[standard]==0.38.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.28.1",
+  "pytest==8.4.2"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["services/api/tests"]

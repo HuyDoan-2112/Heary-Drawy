@@ -1,0 +1,565 @@
+{
+  "$defs": {
+    "ConnectionStatus": {
+      "enum": [
+        "connected",
+        "reconnecting",
+        "disconnected"
+      ],
+      "title": "ConnectionStatus",
+      "type": "string"
+    },
+    "DrawingSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        },
+        "strokes": {
+          "items": {
+            "$ref": "#/$defs/Stroke"
+          },
+          "maxItems": 256,
+          "title": "Strokes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "round_id",
+        "revision"
+      ],
+      "title": "DrawingSnapshot",
+      "type": "object"
+    },
+    "ErrorDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "retryable": {
+          "default": false,
+          "title": "Retryable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ErrorDetail",
+      "type": "object"
+    },
+    "ErrorEnvelope": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "$ref": "#/$defs/ErrorDetail"
+        }
+      },
+      "required": [
+        "error"
+      ],
+      "title": "ErrorEnvelope",
+      "type": "object"
+    },
+    "FeedbackSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "role_feedback": {
+          "$ref": "#/$defs/RoleFeedback"
+        },
+        "shared_result": {
+          "$ref": "#/$defs/SharedResult"
+        },
+        "sticker_id": {
+          "title": "Sticker Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "shared_result",
+        "role_feedback",
+        "sticker_id"
+      ],
+      "title": "FeedbackSnapshot",
+      "type": "object"
+    },
+    "ObjectAccess": {
+      "additionalProperties": false,
+      "properties": {
+        "display_name": {
+          "title": "Display Name",
+          "type": "string"
+        },
+        "image_url": {
+          "title": "Image Url",
+          "type": "string"
+        },
+        "model_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Url"
+        },
+        "object_id": {
+          "title": "Object Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "object_id",
+        "display_name",
+        "image_url"
+      ],
+      "title": "ObjectAccess",
+      "type": "object"
+    },
+    "PlayerSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "avatar_id": {
+          "title": "Avatar Id",
+          "type": "string"
+        },
+        "connection_status": {
+          "$ref": "#/$defs/ConnectionStatus"
+        },
+        "nickname": {
+          "title": "Nickname",
+          "type": "string"
+        },
+        "player_id": {
+          "title": "Player Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "player_id",
+        "nickname",
+        "avatar_id",
+        "connection_status"
+      ],
+      "title": "PlayerSummary",
+      "type": "object"
+    },
+    "Point": {
+      "additionalProperties": false,
+      "properties": {
+        "pressure": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pressure"
+        },
+        "x": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Point",
+      "type": "object"
+    },
+    "ResultStatus": {
+      "enum": [
+        "scored",
+        "neutral_unscored"
+      ],
+      "title": "ResultStatus",
+      "type": "string"
+    },
+    "Role": {
+      "enum": [
+        "speaker",
+        "drawer"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "RoleFeedback": {
+      "additionalProperties": false,
+      "properties": {
+        "lines": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Lines",
+          "type": "array"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        }
+      },
+      "required": [
+        "role",
+        "lines"
+      ],
+      "title": "RoleFeedback",
+      "type": "object"
+    },
+    "RoleFilteredSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "drawing": {
+          "$ref": "#/$defs/DrawingSnapshot"
+        },
+        "feedback": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FeedbackSnapshot"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "object_access": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ObjectAccess"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "room": {
+          "$ref": "#/$defs/RoomSummary"
+        },
+        "round": {
+          "$ref": "#/$defs/RoundSummary"
+        },
+        "session_player_id": {
+          "title": "Session Player Id",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "title": "Snapshot Id",
+          "type": "string"
+        },
+        "voice": {
+          "$ref": "#/$defs/VoiceState"
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "session_player_id",
+        "room",
+        "round",
+        "drawing"
+      ],
+      "title": "RoleFilteredSnapshot",
+      "type": "object"
+    },
+    "RoomSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "pair_id": {
+          "title": "Pair Id",
+          "type": "string"
+        },
+        "participant": {
+          "$ref": "#/$defs/PlayerSummary"
+        },
+        "room_id": {
+          "title": "Room Id",
+          "type": "string"
+        },
+        "teammate": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PlayerSummary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "room_id",
+        "pair_id",
+        "participant"
+      ],
+      "title": "RoomSummary",
+      "type": "object"
+    },
+    "RoundPhase": {
+      "enum": [
+        "role_intro",
+        "collaborating",
+        "finalizing",
+        "feedback",
+        "exploring",
+        "finished"
+      ],
+      "title": "RoundPhase",
+      "type": "string"
+    },
+    "RoundSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "permissions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Permissions",
+          "type": "array"
+        },
+        "phase": {
+          "$ref": "#/$defs/RoundPhase"
+        },
+        "phase_version": {
+          "minimum": 0,
+          "title": "Phase Version",
+          "type": "integer"
+        },
+        "role": {
+          "$ref": "#/$defs/Role"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "round_id",
+        "role",
+        "phase",
+        "phase_version"
+      ],
+      "title": "RoundSummary",
+      "type": "object"
+    },
+    "SharedResult": {
+      "additionalProperties": false,
+      "properties": {
+        "child_summary": {
+          "title": "Child Summary",
+          "type": "string"
+        },
+        "stars": {
+          "anyOf": [
+            {
+              "maximum": 3,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stars"
+        },
+        "status": {
+          "$ref": "#/$defs/ResultStatus"
+        }
+      },
+      "required": [
+        "status",
+        "child_summary"
+      ],
+      "title": "SharedResult",
+      "type": "object"
+    },
+    "SocketEnvelope": {
+      "additionalProperties": false,
+      "properties": {
+        "command_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Command Id"
+        },
+        "event_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Event Id"
+        },
+        "payload": {
+          "additionalProperties": true,
+          "title": "Payload",
+          "type": "object"
+        },
+        "protocol_version": {
+          "const": 1,
+          "title": "Protocol Version",
+          "type": "integer"
+        },
+        "round_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Round Id"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol_version",
+        "type",
+        "payload"
+      ],
+      "title": "SocketEnvelope",
+      "type": "object"
+    },
+    "Stroke": {
+      "additionalProperties": false,
+      "properties": {
+        "color": {
+          "title": "Color",
+          "type": "string"
+        },
+        "points": {
+          "items": {
+            "$ref": "#/$defs/Point"
+          },
+          "maxItems": 512,
+          "title": "Points",
+          "type": "array"
+        },
+        "stroke_id": {
+          "title": "Stroke Id",
+          "type": "string"
+        },
+        "width": {
+          "exclusiveMinimum": 0,
+          "maximum": 64,
+          "title": "Width",
+          "type": "number"
+        }
+      },
+      "required": [
+        "stroke_id",
+        "color",
+        "width"
+      ],
+      "title": "Stroke",
+      "type": "object"
+    },
+    "VoiceState": {
+      "additionalProperties": false,
+      "properties": {
+        "active_local_hold_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Active Local Hold Ids",
+          "type": "array"
+        },
+        "mic_permission": {
+          "default": "unknown",
+          "enum": [
+            "unknown",
+            "granted",
+            "denied"
+          ],
+          "title": "Mic Permission",
+          "type": "string"
+        },
+        "provider_available": {
+          "default": false,
+          "title": "Provider Available",
+          "type": "boolean"
+        },
+        "remote_speaking_player_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Remote Speaking Player Ids",
+          "type": "array"
+        }
+      },
+      "title": "VoiceState",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "drawing_snapshot": {
+      "$ref": "#/$defs/DrawingSnapshot"
+    },
+    "error_envelope": {
+      "$ref": "#/$defs/ErrorEnvelope"
+    },
+    "role_filtered_snapshot": {
+      "$ref": "#/$defs/RoleFilteredSnapshot"
+    },
+    "socket_envelope": {
+      "$ref": "#/$defs/SocketEnvelope"
+    }
+  },
+  "required": [
+    "role_filtered_snapshot",
+    "drawing_snapshot",
+    "socket_envelope",
+    "error_envelope"
+  ],
+  "title": "Heary Drawy contracts",
+  "type": "object"
+}

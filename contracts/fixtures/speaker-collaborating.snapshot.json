@@ -1,0 +1,54 @@
+{
+  "snapshot_id": "snapshot-speaker-collaborating-001",
+  "session_player_id": "player-mango",
+  "room": {
+    "room_id": "room-demo",
+    "pair_id": "pair-demo",
+    "participant": {
+      "player_id": "player-mango",
+      "nickname": "Mango",
+      "avatar_id": "mango",
+      "connection_status": "connected"
+    },
+    "teammate": {
+      "player_id": "player-kiwi",
+      "nickname": "Kiwi",
+      "avatar_id": "kiwi",
+      "connection_status": "connected"
+    }
+  },
+  "round": {
+    "round_id": "round-demo-1",
+    "role": "speaker",
+    "phase": "collaborating",
+    "phase_version": 2,
+    "permissions": ["view_object", "view_drawing", "hold_to_talk"]
+  },
+  "drawing": {
+    "round_id": "round-demo-1",
+    "revision": 3,
+    "strokes": [
+      {
+        "stroke_id": "stroke-1",
+        "color": "#2f5dff",
+        "width": 8,
+        "points": [
+          {"x": 0.31, "y": 0.44},
+          {"x": 0.38, "y": 0.48}
+        ]
+      }
+    ]
+  },
+  "voice": {
+    "mic_permission": "granted",
+    "active_local_hold_ids": [],
+    "remote_speaking_player_ids": ["player-kiwi"],
+    "provider_available": false
+  },
+  "object_access": {
+    "object_id": "object-demo-speaker-only",
+    "display_name": "speaker reference",
+    "image_url": "fixture://speaker-reference-image",
+    "model_url": "fixture://speaker-reference-model"
+  }
+}

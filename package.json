@@ -1,0 +1,25 @@
+{
+  "name": "heary-drawy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @heary-drawy/web run dev",
+    "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build:web": "npm --workspace @heary-drawy/web run build",
+    "lint:web": "npm --workspace @heary-drawy/web run lint",
+    "test:web": "npm --workspace @heary-drawy/web run test",
+    "typecheck:web": "npm --workspace @heary-drawy/web run typecheck",
+    "generate:contracts": "PYTHONPATH=. uv run --project services/api python services/api/scripts/export_contract_schema.py && npm run generate:types",
+    "generate:types": "json2ts -i contracts/schema.json -o apps/web/src/generated/contracts.ts --bannerComment \"/* Generated from contracts/schema.json. Do not edit by hand. */\"",
+    "check:contracts": "PYTHONPATH=. uv run --project services/api python services/api/scripts/export_contract_schema.py --check && node scripts/check-generated-contracts.mjs",
+    "test:api": "PYTHONPATH=. uv run --project services/api --extra dev pytest services/api/tests",
+    "test": "npm run check:contracts && npm run typecheck:web && npm run lint:web && npm run test:web && npm run test:api"
+  },
+  "devDependencies": {
+    "json-schema-to-typescript": "15.0.4"
+  }
+}

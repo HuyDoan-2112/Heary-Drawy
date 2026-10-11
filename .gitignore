@@ -1,0 +1,11 @@
+node_modules/
+apps/web/dist/
+apps/web/node_modules/
+services/api/.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+.DS_Store

@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": "nickname_taken",
+    "message": "That nickname is already being used in this room. Try another one.",
+    "retryable": true
+  }
+}
