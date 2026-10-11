@@ -86,7 +86,7 @@ export type EventId = string | null;
 export type ProtocolVersion = 1;
 export type RoundId6 = string | null;
 export type Type = string;
-export type Phase1 = "exploring";
+export type Phase1 = "finalizing";
 export type PhaseVersion2 = number;
 export type RoundId7 = string;
 
@@ -275,7 +275,7 @@ export interface Payload {
   [k: string]: unknown;
 }
 /**
- * The Drawer tapped Done. Without AI scoring the round goes straight to the neutral result.
+ * The Drawer tapped Done. The round waits in finalizing while Drawy checks it, then reveals.
  */
 export interface SubmitDrawingResponse {
   phase: Phase1;

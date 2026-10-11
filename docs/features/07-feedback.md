@@ -1,6 +1,8 @@
 # 07 - AI feedback and shared result
 
-Status: **planned for the demo (step D2); neutral result built**
+Status: **built for the demo (step D2); real DeepSeek reply not yet checked**
+
+Built as described below in `services/api/app/game/feedback.py`: Done moves the round to `finalizing` (the Checking screen), `check_round` in `main.py` waits for clips, renders the PNG, makes one `deepseek-flash` call (image + JSON output, confirmed on api-docs.deepseek.com 2026-10-11) and publishes once. `DEEPSEEK_API_KEY` comes from the git-ignored `.env` via `npm run demo`. A round left in checking by a restart is finished at startup.
 Dependencies: [03](03-drawing.md), [04](04-object-viewer.md), [06](06-transcription.md)
 
 ## Demo version

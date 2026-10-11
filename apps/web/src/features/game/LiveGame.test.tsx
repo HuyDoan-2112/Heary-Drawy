@@ -139,6 +139,26 @@ describe('LiveGame', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/session/leave', expect.objectContaining({ method: 'POST' }));
   });
 
+  it('shows Drawy checking the real drawing, then the AI stars and this child\'s own lines', () => {
+    const socket = connect();
+    const strokes = [{ stroke_id: 's1', color: '#E5483D', width: 14, points: [{ x: 0.1, y: 0.1 }, { x: 0.5, y: 0.5 }] }];
+    act(() => socket.receive(snapshotMessage({ phase: 'finalizing', role: 'drawer', strokes })));
+    expect(screen.getByRole('heading', { name: 'Drawy is looking' })).toBeInTheDocument();
+    expect(document.querySelector('.checking-drawing path')).toHaveAttribute('d', 'M76 68 L380 340');
+
+    act(() => socket.receive(snapshotMessage({
+      phase: 'exploring', role: 'drawer', strokes, permissions: ['view_drawing', 'play_again'],
+      extra: { feedback: {
+        shared_result: { status: 'scored', stars: 3, child_summary: 'You drew it red!' },
+        role_feedback: { role: 'drawer', lines: ['You drew it red!', 'What is on top?'] },
+        sticker_id: 'apple',
+      } },
+    })));
+    expect(screen.getByRole('img', { name: '3 of 3 stars' })).toBeInTheDocument();
+    expect(screen.getByText('You drew it red!')).toBeInTheDocument();
+    expect(screen.getByText('What is on top?')).toBeInTheDocument();
+  });
+
   it('hides Play again after the last round', () => {
     const socket = connect();
     act(() => socket.receive(snapshotMessage({ phase: 'exploring', roundIndex: 3, permissions: ['view_drawing'] })));

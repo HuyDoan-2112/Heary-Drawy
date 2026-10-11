@@ -1,6 +1,8 @@
 # 06 - Transcription
 
-Status: **planned for the demo (step D2); not started**
+Status: **built for the demo (step D2); not yet checked on real devices**
+
+Built as described below: `uploadClip` and `startClip` in the web app, `POST /api/v1/rounds/{round_id}/clips`, `services/api/app/game/transcribe.py` (`faster-whisper==1.2.1` with `av==18.1.0`, model `small.en` downloaded on first use, about 250 MB, int8 on CPU) and the `clips` table. Clips are also accepted just after Done so the last words count. Checked with two headless browsers playing a recorded voice as the fake mic: the Speaker's clip became correct text and no audio file remained.
 Dependencies: [05](05-live-voice.md)
 
 ## Demo version

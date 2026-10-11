@@ -4,7 +4,7 @@ import { AppleSticker, SpinningApple, Strokes } from '../ui/art';
 import { Clouds, Drawy, MusicButton, Page } from '../ui/frame';
 import { HomeIcon, StarIcon, SwapIcon } from '../ui/icons';
 
-export function CheckingScreen({ live = false }: { live?: boolean } = {}) {
+export function CheckingScreen({ live = false, drawing = fixtureDrawing }: { live?: boolean; drawing?: FixtureStroke[] } = {}) {
   return (
     <Page hills className="checking-page">
       <Clouds />
@@ -21,7 +21,7 @@ export function CheckingScreen({ live = false }: { live?: boolean } = {}) {
       </div>
       <div className="checking-scene">
         <div className="checking-drawing">
-          <Strokes strokes={fixtureDrawing} strokeWidth={16} className="fill-svg" label="Your drawing" />
+          <Strokes strokes={drawing} strokeWidth={16} className="fill-svg" label="Your drawing" />
         </div>
         <Drawy pose="search" className="checking-drawy bob" mirrored />
       </div>

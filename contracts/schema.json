@@ -841,10 +841,10 @@
     },
     "SubmitDrawingResponse": {
       "additionalProperties": false,
-      "description": "The Drawer tapped Done. Without AI scoring the round goes straight to the neutral result.",
+      "description": "The Drawer tapped Done. The round waits in finalizing while Drawy checks it, then reveals.",
       "properties": {
         "phase": {
-          "const": "exploring",
+          "const": "finalizing",
           "title": "Phase",
           "type": "string"
         },

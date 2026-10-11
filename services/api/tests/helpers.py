@@ -1,5 +1,7 @@
 """Shared API test steps: unlock a device, admit a child, read state, reach collaboration."""
 
+import time
+
 from fastapi.testclient import TestClient
 
 
@@ -45,3 +47,14 @@ def start_collaborating(client: TestClient, *children: dict) -> None:
             headers=bearer(child["guest_session_token"]),
         )
         assert response.status_code == 200, response.text
+
+
+def wait_for_phase(client: TestClient, session: dict, phase: str, timeout: float = 5) -> dict:
+    """Poll state until the round reaches `phase` (the AI check runs in the background)."""
+    deadline = time.monotonic() + timeout
+    while True:
+        state = state_of(client, session)
+        if state["round"]["phase"] == phase or time.monotonic() > deadline:
+            assert state["round"]["phase"] == phase
+            return state
+        time.sleep(0.05)

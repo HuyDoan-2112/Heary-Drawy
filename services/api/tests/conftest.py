@@ -7,6 +7,7 @@ cloned from a migrated template, so migrations are exercised for real.
 
 import os
 from collections.abc import Iterator
+from contextlib import contextmanager
 from uuid import uuid4
 
 import psycopg
@@ -53,16 +54,28 @@ def database_url(pg_admin_url: str, template_db: str) -> Iterator[str]:
             admin.execute(f'drop database if exists "{name}" with (force)')
 
 
-@pytest.fixture
-def client(database_url: str) -> Iterator["TestClient"]:
-    """API client with a server-provisioned Room and a shared event loop."""
+def no_ai(*_args: object) -> None:
+    """Tests never call the real DeepSeek API: no result means the neutral feedback."""
+    return
+
+
+@contextmanager
+def make_client(database_url: str, **options: object) -> Iterator["TestClient"]:
+    """API client with a server-provisioned Room. Whisper and DeepSeek are replaced by stand-ins."""
     from datetime import timedelta
 
     from services.api.app.main import create_app
 
-    app = create_app(database_url, allowed_origins=("http://testserver",))
+    settings = {"transcribe": lambda _path: "", "ask_ai": no_ai, "clip_grace_seconds": 0, "clip_wait_seconds": 2, **options}
+    app = create_app(database_url, allowed_origins=("http://testserver",), **settings)
     room = app.state.game_store.provision_room(timedelta(days=1))
     app.state.test_room_id = room.room_id
     app.state.test_room_passcode = room.passcode
     with TestClient(app) as test_client:
+        yield test_client
+
+
+@pytest.fixture
+def client(database_url: str) -> Iterator["TestClient"]:
+    with make_client(database_url) as test_client:
         yield test_client

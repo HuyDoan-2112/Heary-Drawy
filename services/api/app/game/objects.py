@@ -13,6 +13,8 @@ class SecretObject:
     object_id: str
     display_name: str
     svg: str
+    # Visual features the AI checks in the Speaker's words and the drawing (Feature 07).
+    features: tuple[str, ...] = ()
 
 
 def _svg(body: str) -> str:
@@ -28,6 +30,7 @@ CATALOG: tuple[SecretObject, ...] = (
             '<path d="M100 56c0-14 4-26 12-36" fill="none" stroke="#8B5A2B" stroke-width="7" stroke-linecap="round"/>'
             f'<path d="M112 34c10-14 30-16 42-8-6 14-26 22-42 8z" fill="#35B26B" {_INK}/>'
         ),
+        features=("red", "round body", "stem on top", "green leaf"),
     ),
     SecretObject(
         "ball",
@@ -36,6 +39,7 @@ CATALOG: tuple[SecretObject, ...] = (
             f'<circle cx="100" cy="100" r="70" fill="#2F80ED" {_INK}/>'
             f'<path d="M30 100h140M100 30c-30 30-30 110 0 140M100 30c30 30 30 110 0 140" fill="none" {_INK}/>'
         ),
+        features=("blue", "round", "lines across it"),
     ),
     SecretObject(
         "house",
@@ -47,6 +51,7 @@ CATALOG: tuple[SecretObject, ...] = (
             f'<rect x="62" y="110" width="18" height="18" fill="#fff" {_INK}/>'
             f'<rect x="120" y="110" width="18" height="18" fill="#fff" {_INK}/>'
         ),
+        features=("square walls", "triangle roof", "door", "two windows"),
     ),
     SecretObject(
         "sun",
@@ -55,6 +60,7 @@ CATALOG: tuple[SecretObject, ...] = (
             f'<circle cx="100" cy="100" r="44" fill="#FFC83D" {_INK}/>'
             f'<path d="M100 20v24M100 156v24M20 100h24M156 100h24M43 43l17 17M140 140l17 17M157 43l-17 17M60 140l-17 17" fill="none" {_INK}/>'
         ),
+        features=("yellow", "round middle", "rays all around"),
     ),
     SecretObject(
         "fish",
@@ -64,6 +70,7 @@ CATALOG: tuple[SecretObject, ...] = (
             f'<path d="M150 100l30-30v60z" fill="#FF9F43" {_INK}/>'
             '<circle cx="66" cy="94" r="7" fill="#1B2B4B"/>'
         ),
+        features=("orange", "oval body", "triangle tail", "eye"),
     ),
     SecretObject(
         "tree",
@@ -72,6 +79,7 @@ CATALOG: tuple[SecretObject, ...] = (
             f'<rect x="88" y="120" width="24" height="56" fill="#8B5A2B" {_INK}/>'
             f'<circle cx="100" cy="84" r="54" fill="#35B26B" {_INK}/>'
         ),
+        features=("brown trunk", "green round top"),
     ),
 )
 

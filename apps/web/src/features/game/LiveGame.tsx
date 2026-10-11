@@ -5,7 +5,7 @@ import { MicScreen, ModeScreen, TeamScreen } from '../../app/screens/JoinFlow';
 import { DrawerPlayView, SpeakerPlayView } from '../../app/screens/Play';
 import { ArrowIcon, HomeIcon } from '../../app/ui/icons';
 import type { RoleFilteredSnapshot } from '../../generated/contracts';
-import { fetchPicture, leaveRoom, type GuestSession } from '../rooms/api';
+import { fetchPicture, leaveRoom, uploadClip, type GuestSession } from '../rooms/api';
 import { useRoomConnection, type RoomSnapshot } from '../rooms/useRoomConnection';
 import { hasMicrophone, requestMicrophone, useVoice } from '../voice/voice';
 import { toScreenStroke, toServerStroke } from './strokes';
@@ -68,6 +68,9 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
     polite: Boolean(teammate && session.player_id < teammate.player_id),
     send,
     onRelay,
+    onClip: (clip) => {
+      if (round) void uploadClip(session, round.round.round_id, clip);
+    },
   });
   const pictureSrc = usePicture(session, round?.object_access?.image_url);
 
@@ -154,7 +157,7 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
       />
     );
   }
-  if (phase !== 'exploring') return <CheckingScreen live />;
+  if (phase !== 'exploring') return <CheckingScreen live drawing={strokes} />;
 
   const lines = round.feedback?.role_feedback.lines ?? [neutralResult.praise, neutralResult.question];
   const canPlayAgain = round.round.permissions?.includes('play_again') && !round.ready?.self_ready;
@@ -163,7 +166,7 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   else if (round.ready?.teammate_ready) resultStatus = `${mate.name} wants to play again!`;
   return (
     <ResultScreen
-      result={{ stars: null, praise: lines[0], question: lines[1] ?? '' }}
+      result={{ stars: (round.feedback?.shared_result.stars as 1 | 2 | 3 | undefined) ?? null, praise: lines[0], question: lines[1] ?? '' }}
       picture={picture}
       drawing={strokes}
       drawingLabel={role === 'drawer' ? 'Your drawing' : `${mate.name}'s drawing`}

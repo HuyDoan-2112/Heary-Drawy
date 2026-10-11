@@ -27,6 +27,24 @@ interface VoiceOptions {
   polite: boolean;
   send: (type: string, payload: Record<string, unknown>) => void;
   onRelay: (listener: RelayListener) => () => void;
+  /** Receives each held clip after release, for transcription. Partner audio never waits for it. */
+  onClip?: (clip: Blob) => void;
+}
+
+const MIN_CLIP_MS = 400; // Shorter holds are taps, not speech.
+
+/** Records one hold of the same mic stream (Safari: audio/mp4, Chrome: audio/webm). */
+function startClip(onClip: (clip: Blob) => void): (() => void) | null {
+  if (!microphone || typeof MediaRecorder === 'undefined') return null;
+  const recorder = new MediaRecorder(microphone);
+  const chunks: Blob[] = [];
+  const startedAt = Date.now();
+  recorder.ondataavailable = (event) => chunks.push(event.data);
+  recorder.onstop = () => {
+    if (Date.now() - startedAt >= MIN_CLIP_MS) onClip(new Blob(chunks, { type: recorder.mimeType }));
+  };
+  recorder.start();
+  return () => recorder.stop();
 }
 
 /**
@@ -35,11 +53,12 @@ interface VoiceOptions {
  * talk button, so nothing is sent otherwise. Demo scope: no TURN relay, so both devices need a
  * direct network path (for example the same Wi-Fi).
  */
-export function useVoice({ active, polite, send, onRelay }: VoiceOptions) {
+export function useVoice({ active, polite, send, onRelay, onClip }: VoiceOptions) {
   const [teammateTalking, setTeammateTalking] = useState(false);
   const [holding, setHolding] = useState(false);
   const peerRef = useRef<RTCPeerConnection | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const stopClip = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (!active || typeof RTCPeerConnection === 'undefined') return undefined;
@@ -132,6 +151,8 @@ export function useVoice({ active, polite, send, onRelay }: VoiceOptions) {
   const setTalking = (talking: boolean) => {
     const track = microphone?.getAudioTracks()[0];
     if (track) track.enabled = talking;
+    stopClip.current?.();
+    stopClip.current = talking && onClip ? startClip(onClip) : null;
     setHolding(talking);
     send('voice.talking', { talking });
   };
