@@ -109,13 +109,20 @@ export function useVoice({ active, polite, send, onRelay }: VoiceOptions) {
     };
   }, [active, polite, send, onRelay]);
 
-  // An impolite peer that hears "hello" restarts the offer so a late joiner still connects.
+  // An impolite peer that hears "hello" makes sure a late joiner gets an offer: it resends one that
+  // went out before the teammate was listening, or restarts negotiation if it was already connected.
   useEffect(() => {
     if (!active) return undefined;
     return onRelay((type, payload) => {
-      if (type === 'voice.signal' && payload.hello && !polite) peerRef.current?.restartIce();
+      const peer = peerRef.current;
+      if (type !== 'voice.signal' || !payload.hello || polite || !peer) return;
+      if (peer.signalingState === 'have-local-offer' && peer.localDescription) {
+        send('voice.signal', { description: peer.localDescription.toJSON() });
+      } else {
+        peer.restartIce();
+      }
     });
-  }, [active, polite, onRelay]);
+  }, [active, polite, send, onRelay]);
 
   const setTalking = (talking: boolean) => {
     const track = microphone?.getAudioTracks()[0];

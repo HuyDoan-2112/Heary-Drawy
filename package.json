@@ -10,6 +10,7 @@
     "dev:web": "npm --workspace @heary-drawy/web run dev",
     "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.main:create_app --factory --reload --host 127.0.0.1 --port 8000",
     "dev:api:local": "PYTHONPATH=. uv run --project services/api --extra dev python services/api/scripts/run_local.py",
+    "demo": "node scripts/demo.mjs",
     "db:migrate": "PYTHONPATH=. uv run --project services/api python services/api/scripts/migrate.py",
     "db:provision-room": "PYTHONPATH=. uv run --project services/api python services/api/scripts/provision_room.py",
     "db:close-room": "PYTHONPATH=. uv run --project services/api python services/api/scripts/close_room.py",
