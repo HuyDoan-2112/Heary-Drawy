@@ -792,6 +792,14 @@ input:focus-visible {
   object-fit: contain;
 }
 
+.secret-model {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  --poster-color: transparent;
+}
+
 .apple-shadow {
   position: absolute;
   left: 20.8%;

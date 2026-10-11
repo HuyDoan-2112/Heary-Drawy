@@ -2,6 +2,7 @@
 
 from fastapi.testclient import TestClient
 
+from services.api.app.game.objects import CATALOG
 from services.api.tests.helpers import (
     bearer,
     join,
@@ -31,14 +32,17 @@ def test_only_the_speaker_sees_the_picture_before_reveal(client: TestClient) -> 
     round_id = speaker_state["round"]["round_id"]
 
     assert speaker_state["object_access"]["image_url"] == f"/api/v1/rounds/{round_id}/picture"
+    assert speaker_state["object_access"]["model_url"] == f"/api/v1/rounds/{round_id}/model"
     assert "object_access" not in drawer_state
     assert "feedback" not in drawer_state
-    picture = client.get(f"/api/v1/rounds/{round_id}/picture", headers=bearer(speaker["guest_session_token"]))
-    assert picture.status_code == 200
-    assert picture.headers["content-type"].startswith("image/svg+xml")
-    blocked = client.get(f"/api/v1/rounds/{round_id}/picture", headers=bearer(drawer["guest_session_token"]))
-    assert blocked.status_code == 403
-    assert "<svg" not in blocked.text
+    for kind, media_type, magic in (("picture", "image/png", b"\x89PNG"), ("model", "model/gltf-binary", b"glTF")):
+        allowed = client.get(f"/api/v1/rounds/{round_id}/{kind}", headers=bearer(speaker["guest_session_token"]))
+        assert allowed.status_code == 200
+        assert allowed.headers["content-type"] == media_type
+        assert allowed.content.startswith(magic)
+        blocked = client.get(f"/api/v1/rounds/{round_id}/{kind}", headers=bearer(drawer["guest_session_token"]))
+        assert blocked.status_code == 403
+        assert magic not in blocked.content
 
 
 def test_drawer_strokes_reach_the_speaker_live_and_speaker_cannot_draw(client: TestClient) -> None:
@@ -99,3 +103,10 @@ def test_voice_setup_messages_are_relayed_only_to_the_teammate(client: TestClien
         assert relayed == {"protocol_version": 1, "type": "voice.signal", "payload": {"description": {"type": "offer", "sdp": "v=0"}}}
         two.send_json({"protocol_version": 1, "type": "voice.talking", "payload": {"talking": True}})
         assert one.receive_json()["payload"] == {"talking": True}
+
+
+def test_every_secret_object_has_its_3d_model_and_picture() -> None:
+    for item in CATALOG:
+        assert item.model_path.read_bytes().startswith(b"glTF"), item.object_id
+        assert item.image_path.read_bytes().startswith(b"\x89PNG"), item.object_id
+        assert len(item.features) >= 3, item.object_id
