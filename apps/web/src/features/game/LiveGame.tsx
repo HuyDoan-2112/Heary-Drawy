@@ -140,7 +140,6 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   if (phase === 'collaborating' && role === 'speaker') {
     return (
       <SpeakerPlayView
-        selfAvatarId={self!.avatar_id}
         teammate={mate}
         picture={secretObject}
         strokes={strokes}
@@ -152,7 +151,6 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   if (phase === 'collaborating') {
     return (
       <DrawerPlayView
-        selfAvatarId={self!.avatar_id}
         teammate={mate}
         strokes={strokes}
         teammateTalking={voice.teammateTalking}

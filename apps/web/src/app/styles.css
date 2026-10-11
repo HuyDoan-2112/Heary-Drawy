@@ -109,7 +109,7 @@ input:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
   .role-intro { display: none; }
 }
 
@@ -359,6 +359,96 @@ input:focus-visible {
   font-family: var(--grownup-font);
   font-size: calc(10px + 6 * var(--k));
   font-weight: 800;
+}
+
+/* Character select: every free character idles at its own rhythm (--i is the tile index);
+   picking one makes it hop and spin, pops the tile, and bursts sparkles around it. */
+@keyframes charIdle {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  25% { transform: translateY(-4%) rotate(0deg) scale(0.98, 1.03); }
+  50% { transform: translateY(0) rotate(3deg) scale(1.02, 0.98); }
+  75% { transform: translateY(-2%) rotate(0deg); }
+}
+
+@keyframes charHop {
+  0% { transform: translateY(0); }
+  15% { transform: translateY(4%) scale(1.12, 0.86); }
+  40% { transform: translateY(-18%) rotate(-14deg) scale(0.92, 1.1); }
+  60% { transform: translateY(-20%) rotate(14deg); }
+  78% { transform: translateY(2%) scale(1.14, 0.86); }
+  90% { transform: translateY(-4%) scale(0.97, 1.04); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes charHappy {
+  0%, 100% { transform: translateY(0) scale(1.06, 0.95); }
+  50% { transform: translateY(-12%) scale(0.97, 1.05); }
+}
+
+@keyframes tilePop {
+  0% { scale: 1; }
+  40% { scale: 1.1; }
+  70% { scale: 0.97; }
+  100% { scale: 1.04; }
+}
+
+@keyframes sparkleBurst {
+  0% { opacity: 1; transform: scale(0.35); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+.character-tile {
+  transition: scale 0.12s ease-out, background-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.character-tile:not([data-picked='true']):active {
+  scale: 0.93;
+}
+
+.character-tile .tile-avatar {
+  transform-origin: 50% 85%;
+  animation: charIdle calc(2.4s + var(--i, 0) * 0.13s) ease-in-out calc(var(--i, 0) * -0.41s) infinite;
+}
+
+.character-tile[data-selected='true'] {
+  z-index: 1;
+  animation: tilePop 0.45s ease-out forwards;
+}
+
+.character-tile[data-selected='true'] .tile-avatar {
+  animation: charHop 0.7s ease-out, charHappy 1.1s ease-in-out 0.7s infinite;
+}
+
+.character-tile[data-selected='true'] .character-name {
+  animation: popin 0.4s ease-out;
+}
+
+.character-tile[data-selected='true']::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow:
+    0 -62px 0 0 var(--sun),
+    54px -31px 0 -2px var(--coral),
+    54px 31px 0 0 var(--mint),
+    0 62px 0 -2px var(--grape),
+    -54px 31px 0 0 var(--sun),
+    -54px -31px 0 -2px var(--coral);
+  opacity: 0;
+  animation: sparkleBurst 0.9s ease-out;
+}
+
+.character-tile[data-picked='true'] .tile-avatar {
+  animation: none;
+  opacity: 0.55;
+  filter: grayscale(0.6);
 }
 
 .name-field {
@@ -662,11 +752,6 @@ input:focus-visible {
 .role-talk.role-chip { background: var(--coral); color: var(--ink); }
 .role-draw.role-chip { background: var(--grape); color: #fff; }
 
-.chip-avatar {
-  width: calc(42px + 16 * var(--k));
-  height: calc(42px + 16 * var(--k));
-}
-
 .role-chip-text {
   font-size: calc(20px + 6 * var(--k));
   font-weight: 700;
@@ -902,7 +987,7 @@ input:focus-visible {
   background: var(--coral);
   box-shadow: 0 9px 0 var(--ink);
   font-size: calc(34px + 14 * var(--k));
-  --icon: calc(60px + 24 * var(--k));
+  --icon: calc(76px + 28 * var(--k));
 }
 
 .speaker-strip {
@@ -1017,7 +1102,7 @@ input:focus-visible {
   background: var(--sun);
   box-shadow: 0 8px 0 var(--ink);
   font-size: calc(28px + 16 * var(--k));
-  --icon: calc(50px + 22 * var(--k));
+  --icon: calc(62px + 24 * var(--k));
 }
 
 .done-button {
@@ -1026,7 +1111,7 @@ input:focus-visible {
   background: var(--mint);
   box-shadow: 0 8px 0 var(--ink);
   font-size: calc(28px + 18 * var(--k));
-  --icon: calc(46px + 18 * var(--k));
+  --icon: calc(60px + 22 * var(--k));
 }
 
 /* iPhone design: icons sit above the labels and the selected color ring is drawn inside. */
