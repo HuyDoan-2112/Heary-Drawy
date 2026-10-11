@@ -160,13 +160,17 @@ describe('LiveGame', () => {
     expect(screen.getByRole('img', { name: 'Apple' })).toHaveAttribute('src', 'blob:picture');
   });
 
-  it('never downloads the 3D model for the drawer, even after the reveal', async () => {
+  it('shows both players the 3D object at the reveal, but never the drawer before it', async () => {
     const fetchMock = stubSecretFiles();
     const socket = connect();
-    act(() => socket.receive(snapshotMessage({ phase: 'exploring', role: 'drawer', extra: { object_access: access3d } })));
+    act(() => socket.receive(snapshotMessage({ phase: 'collaborating', role: 'drawer' })));
+    expect(document.querySelector('model-viewer')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
 
-    expect(await screen.findByRole('img', { name: 'Apple' })).toHaveAttribute('src', 'blob:picture');
-    expect(fetchMock).not.toHaveBeenCalledWith('/api/v1/rounds/round-1/model', expect.anything());
+    act(() => socket.receive(snapshotMessage({ phase: 'exploring', role: 'drawer', version: 2, extra: { object_access: access3d } })));
+
+    await waitFor(() => expect(document.querySelector('model-viewer')).toHaveAttribute('src', 'blob:model'));
+    expect(screen.getByRole('heading', { name: 'Great teamwork!' })).toBeInTheDocument();
   });
 
   it('shows the neutral result with Play again, and Done leaves the room', async () => {

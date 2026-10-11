@@ -8,7 +8,7 @@ Built in [02](features/02-rooms-and-rounds.md) plus the minimal round slice reco
 
 - Grown-up passcode unlocks each device; children pick a character/name and get paired.
 - Random roles, short role intro, 3-round match with role swap on Play again.
-- Server picks a secret 3D object per round; only the Speaker sees it (spin and zoom) until Reveal shows its picture to both.
+- Server picks a secret 3D object per round; only the Speaker sees it (spin and zoom) until Reveal shows it to both.
 - Drawer's strokes relay live to the Speaker's read-only canvas.
 - Hold-to-talk voice: peer-to-peer WebRTC, signaled over the existing socket.
 - Done reveals the picture beside the drawing with a neutral, unscored result (replaced by AI feedback in D2).

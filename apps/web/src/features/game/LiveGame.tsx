@@ -75,9 +75,10 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   });
   const access = round?.object_access;
   const pictureSrc = useSecretFile(session, access?.image_url);
-  // Only the Speaker spins the model, and only while describing it.
-  const speakerDescribing = round?.round.role === 'speaker' && round.round.phase === 'collaborating';
-  const modelSrc = useSecretFile(session, speakerDescribing ? access?.model_url : null);
+  // The Speaker spins the model while describing it; at Reveal both players get it.
+  const roundPhase = round?.round.phase;
+  const showModel = (round?.round.role === 'speaker' && roundPhase === 'collaborating') || roundPhase === 'exploring';
+  const modelSrc = useSecretFile(session, showModel ? access?.model_url : null);
 
   useEffect(() => {
     if (connection === 'ended') onExit();
@@ -96,7 +97,7 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   const self = snapshot?.room.participant;
   const mate = teammate ? { name: teammate.nickname, avatarId: teammate.avatar_id } : null;
   const label = access?.display_name ?? 'Picture';
-  const picture = pictureSrc ? <img className="secret-picture" src={pictureSrc} alt={label} /> : null;
+  const secretObject = <SecretModel modelSrc={modelSrc} pictureSrc={pictureSrc} label={label} />;
   const strokes = round ? (round.drawing.strokes ?? []).map(toScreenStroke) : [];
   const talk = { holding: voice.holding, start: voice.startTalking, stop: voice.stopTalking };
   const status = (
@@ -141,7 +142,7 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
       <SpeakerPlayView
         selfAvatarId={self!.avatar_id}
         teammate={mate}
-        picture={<SecretModel modelSrc={modelSrc} pictureSrc={pictureSrc} label={label} />}
+        picture={secretObject}
         strokes={strokes}
         teammateTalking={voice.teammateTalking}
         talk={talk}
@@ -173,7 +174,7 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   return (
     <ResultScreen
       result={{ stars: (round.feedback?.shared_result.stars as 1 | 2 | 3 | undefined) ?? null, praise: lines[0], question: lines[1] ?? '' }}
-      picture={picture}
+      picture={secretObject}
       drawing={strokes}
       drawingLabel={role === 'drawer' ? 'Your drawing' : `${mate.name}'s drawing`}
       actions={{

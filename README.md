@@ -2,7 +2,7 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: a minimal playable round runs locally - grown-up passcode join, pairing, random roles, a secret 3D object only the Speaker sees (spin and pinch-zoom, with its picture while loading and at Reveal), live drawing relay, peer-to-peer hold-to-talk voice, local Whisper transcription of each held clip, DeepSeek feedback with 1-3 team stars at reveal (neutral result without a key), and 3 rounds with role swap. `npm run demo` serves it over HTTPS on the LAN. Checked on an iPad with a laptop browser; not yet on an iPhone. No hosted deployment.** The current goal is a two-device iPad + iPhone demo on one Wi-Fi network, with adults only; see the [implementation plan](docs/implementation-plan.md).
+**Current state: a minimal playable round runs locally - grown-up passcode join, pairing, random roles, a secret 3D object only the Speaker sees (spin and pinch-zoom; both see it at Reveal), live drawing relay, peer-to-peer hold-to-talk voice, local Whisper transcription of each held clip, DeepSeek feedback with 1-3 team stars at reveal (neutral result without a key), and 3 rounds with role swap. `npm run demo` serves it over HTTPS on the LAN. Checked on an iPad with a laptop browser; not yet on an iPhone. No hosted deployment.** The current goal is a two-device iPad + iPhone demo on one Wi-Fi network, with adults only; see the [implementation plan](docs/implementation-plan.md).
 
 ## Start here
 

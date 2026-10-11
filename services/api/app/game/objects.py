@@ -2,7 +2,7 @@
 
 Low-poly food models from Kenney's Food Kit 2.0 (CC0, https://kenney.nl/assets/food-kit), with
 textures embedded so each is one GLB file. The PNG beside each model is a render of it, shown
-while the 3D model loads, if 3D fails, and at Reveal.
+while the 3D model loads and if 3D fails.
 """
 
 from dataclasses import dataclass
