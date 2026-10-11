@@ -14,6 +14,7 @@ import uvicorn
 
 from services.api.app.db import apply_migrations
 from services.api.app.game.store import GameStore
+from services.api.app.game.transcribe import WHISPER_MODEL, load_model
 from services.api.app.main import create_app
 
 
@@ -29,6 +30,11 @@ def main() -> None:
     url = server.get_uri()
     apply_migrations(url)
     print(f"Local Postgres at {data_dir}", flush=True)
+    print(f"Loading Whisper {WHISPER_MODEL} (the first run downloads about 460 MB)...", flush=True)
+    try:
+        load_model()
+    except Exception as exc:  # noqa: BLE001 - the game still runs; clips are marked failed.
+        print(f"Whisper is unavailable ({type(exc).__name__}); feedback will not hear speech", flush=True)
     if args.room_hours:
         store = GameStore(url)
         # One demo Room at a time: tabs left open from an earlier run must not slip back into

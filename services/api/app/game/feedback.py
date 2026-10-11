@@ -84,11 +84,16 @@ Reply in json only, exactly in this shape:
 Rules:
 - One entry in "features" for every checklist item, using the checklist wording.
 - "described": the Speaker's words clearly gave this feature. "drawn": the drawing shows it.
-- Lines are for young children: warm, simple words, at most 12 words each.
+- Lines are for young children: warm, simple words, at most 12 words each. Use plain hyphens, never long dashes.
 - Praise something specific that went well. A question may point at one missing feature without giving the answer.
 - Never judge drawing skill or neatness, never compare the two children, never mention the picture's name.
 - Never comment on how a child's voice or speech sounds (no clarity, loudness, or pronunciation); talk about what they said.
 """
+
+
+def clean_line(line: str) -> str:
+    """Plain hyphens like the rest of the app's copy, trimmed to fit Drawy's bubble."""
+    return line.replace("\u2014", "-").replace("\u2013", "-").strip()[:LINE_MAX]
 
 
 def ask_deepseek(name: str, features: tuple[str, ...], transcript: list[tuple[str, str]], png: bytes) -> dict[str, Any] | None:
@@ -119,8 +124,8 @@ def ask_deepseek(name: str, features: tuple[str, ...], transcript: list[tuple[st
     except OpenAIError as exc:  # Network, auth, rate limit, timeout: the round still continues.
         logger.info("feedback call failed: %s", type(exc).__name__)
         return None
-    speaker_lines = [line.strip()[:LINE_MAX] for line in reply.speaker_lines if line.strip()]
-    drawer_lines = [line.strip()[:LINE_MAX] for line in reply.drawer_lines if line.strip()]
+    speaker_lines = [clean_line(line) for line in reply.speaker_lines if line.strip()]
+    drawer_lines = [clean_line(line) for line in reply.drawer_lines if line.strip()]
     if not speaker_lines or not drawer_lines:
         return None
     return {"stars": stars_for(reply.features, features), "speaker_lines": speaker_lines, "drawer_lines": drawer_lines}
