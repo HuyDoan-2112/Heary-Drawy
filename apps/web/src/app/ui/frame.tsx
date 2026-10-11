@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { avatarAssets, drawyAssets, isAvatarId, type DrawyPose } from '../assets';
 import { MusicIcon } from './icons';
+import { setMusicPlaying, unlockMusic } from './music';
 
 /**
  * Full-screen page. Layout is fluid: sizes in styles.css interpolate between the approved iPhone
@@ -37,16 +38,50 @@ export function Clouds() {
   );
 }
 
-const MusicContext = createContext<{ on: boolean; toggle: () => void }>({ on: true, toggle: () => undefined });
+const MUSIC_KEY = 'heary-drawy.music';
 
-export function MusicProvider({ children }: { children: ReactNode }) {
-  const [on, setOn] = useState(true);
-  return <MusicContext.Provider value={{ on, toggle: () => setOn((value) => !value) }}>{children}</MusicContext.Provider>;
+interface MusicControls {
+  on: boolean;
+  toggle: () => void;
+  /** A screen with music mounted; returns its cleanup. */
+  play: () => () => void;
 }
 
-/** Music on/off toggle. There is no soundtrack yet, so it only records the child's choice. */
-export function MusicButton() {
-  const { on, toggle } = useContext(MusicContext);
+const MusicContext = createContext<MusicControls>({ on: true, toggle: () => undefined, play: () => () => undefined });
+
+/** Music is on by default; the music button's choice is remembered on this device. */
+export function MusicProvider({ children }: { children: ReactNode }) {
+  const [on, setOn] = useState(() => window.localStorage.getItem(MUSIC_KEY) !== 'off');
+  const [screens, setScreens] = useState(0);
+  const playing = on && screens > 0;
+
+  useEffect(() => {
+    setMusicPlaying(playing);
+  }, [playing]);
+
+  const toggle = () => {
+    const next = !on;
+    window.localStorage.setItem(MUSIC_KEY, next ? 'on' : 'off');
+    setOn(next);
+    // Apply now, inside the tap, so iOS lets the music start.
+    setMusicPlaying(next && screens > 0);
+    unlockMusic();
+  };
+  const play = useCallback(() => {
+    setScreens((count) => count + 1);
+    return () => setScreens((count) => count - 1);
+  }, []);
+
+  return <MusicContext.Provider value={{ on, toggle, play }}>{children}</MusicContext.Provider>;
+}
+
+/**
+ * Music on/off toggle. Screens showing it play the music, except rounds (`quiet`), which stay
+ * silent so music never competes with hold-to-talk or leaks into a teammate's microphone.
+ */
+export function MusicButton({ quiet = false }: { quiet?: boolean }) {
+  const { on, toggle, play } = useContext(MusicContext);
+  useEffect(() => (quiet ? undefined : play()), [quiet, play]);
   return (
     <button type="button" className="music-button" aria-label="Music on or off" aria-pressed={on} onClick={toggle}>
       <MusicIcon off={!on} />

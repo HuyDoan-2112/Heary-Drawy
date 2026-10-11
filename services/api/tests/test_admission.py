@@ -221,6 +221,18 @@ def test_closing_a_room_signs_everyone_out(client: TestClient) -> None:
     assert retry.status_code == 401
 
 
+def test_a_new_demo_room_signs_out_tabs_left_in_the_old_one(client: TestClient) -> None:
+    ipad, _iphone, mango, _kiwi = two_children(client)
+    store = client.app.state.game_store
+
+    assert store.close_open_rooms() == 1
+    store.provision_room(timedelta(hours=1))
+
+    assert client.get(f"/api/v1/rooms/{mango['room_id']}/state", headers=bearer(mango["guest_session_token"])).status_code == 401
+    assert client.get(f"/api/v1/rooms/{ipad['room_id']}/lobby", headers=bearer(ipad["device_token"])).status_code == 401
+    assert store.close_open_rooms() == 1
+
+
 def test_cleanup_deletes_rooms_seven_days_after_they_end(client: TestClient, database_url: str) -> None:
     store = client.app.state.game_store
     old_room = client.app.state.test_room_id

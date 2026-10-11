@@ -7,7 +7,7 @@ import { ArrowIcon, HomeIcon } from '../../app/ui/icons';
 import type { RoleFilteredSnapshot } from '../../generated/contracts';
 import { fetchPicture, leaveRoom, type GuestSession } from '../rooms/api';
 import { useRoomConnection, type RoomSnapshot } from '../rooms/useRoomConnection';
-import { requestMicrophone, useVoice } from '../voice/voice';
+import { hasMicrophone, requestMicrophone, useVoice } from '../voice/voice';
 import { toScreenStroke, toServerStroke } from './strokes';
 
 type Step = 'mic' | 'mode' | 'game';
@@ -53,21 +53,18 @@ function usePicture(session: GuestSession, url: string | undefined) {
  * The real game for an admitted child. Everything shown comes from the latest server snapshot;
  * the only local steps are the mic and mode screens right after joining.
  */
-export function LiveGame({ session, startAtMic, onExit }: { session: GuestSession; startAtMic: boolean; onExit: () => void }) {
-  const [step, setStep] = useState<Step>(startAtMic ? 'mic' : 'game');
+export function LiveGame({ session, justJoined, onExit }: { session: GuestSession; justJoined: boolean; onExit: () => void }) {
+  // The mic prompt only shows reliably on iOS from a tap, so every page load without the mic,
+  // including a resumed session after a reload, starts at the mic screen.
+  const [step, setStep] = useState<Step>(() => (hasMicrophone() ? 'game' : 'mic'));
   const { snapshot, connection, notice, send, sendRoundCommand, onRelay } = useRoomConnection(session);
   const round = snapshot && 'round' in snapshot ? (snapshot as RoleFilteredSnapshot) : null;
   const teammate = round?.room.teammate ?? null;
 
-  // Voice starts only once this device has its mic: after the mic screen, or (after a reload,
-  // which skips that screen) once the browser hands the mic back. Otherwise it would connect
-  // listen-only and the partner could never hear this child.
-  const [micReady, setMicReady] = useState(false);
-  useEffect(() => {
-    if (step === 'game' && !micReady) void requestMicrophone().finally(() => setMicReady(true));
-  }, [step, micReady]);
+  // Voice starts after the mic screen; otherwise it would connect listen-only and the partner
+  // could never hear this child.
   const voice = useVoice({
-    active: micReady && Boolean(round && teammate?.connection_status === 'connected'),
+    active: step === 'game' && Boolean(round && teammate?.connection_status === 'connected'),
     polite: Boolean(teammate && session.player_id < teammate.player_id),
     send,
     onRelay,
@@ -83,7 +80,8 @@ export function LiveGame({ session, startAtMic, onExit }: { session: GuestSessio
   };
 
   if (step === 'mic') {
-    return <MicScreen onContinue={() => void requestMicrophone().finally(() => setStep('mode'))} />;
+    // A resumed session already chose its mode, so it goes straight back to the game.
+    return <MicScreen onContinue={() => void requestMicrophone().finally(() => setStep(justJoined ? 'mode' : 'game'))} />;
   }
   if (step === 'mode') return <ModeScreen onContinue={() => setStep('game')} />;
 

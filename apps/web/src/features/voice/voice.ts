@@ -3,6 +3,11 @@ import type { RelayListener } from '../rooms/useRoomConnection';
 
 let microphone: MediaStream | null = null;
 
+/** Whether this page already holds the microphone (a reload loses it). */
+export function hasMicrophone(): boolean {
+  return microphone !== null;
+}
+
 /** Ask for the microphone once, from the "Turn on mic" tap. Returns false if it is unavailable. */
 export async function requestMicrophone(): Promise<boolean> {
   if (microphone) return true;

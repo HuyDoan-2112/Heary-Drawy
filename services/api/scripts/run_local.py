@@ -30,7 +30,12 @@ def main() -> None:
     apply_migrations(url)
     print(f"Local Postgres at {data_dir}", flush=True)
     if args.room_hours:
-        room = GameStore(url).provision_room(timedelta(hours=args.room_hours))
+        store = GameStore(url)
+        # One demo Room at a time: tabs left open from an earlier run must not slip back into
+        # its Room. Closing it signs them out, so they ask for the new passcode instead.
+        if closed := store.close_open_rooms():
+            print(f"Closed {closed} earlier Room(s)", flush=True)
+        room = store.provision_room(timedelta(hours=args.room_hours))
         print(f"Demo room {room.room_id} passcode: {room.passcode}", flush=True)
     uvicorn.run(create_app(url), host="127.0.0.1", port=8000)
 

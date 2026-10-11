@@ -31,7 +31,7 @@ function TopBar({ role, selfAvatarId }: { role: Role; selfAvatarId: string }) {
   const label = role === 'talk' ? 'You talk' : 'You draw';
   return (
     <header className="play-top">
-      <MusicButton />
+      <MusicButton quiet />
       <div className={`role-chip role-${role}`} role="img" aria-label={label}>
         <Avatar id={selfAvatarId} className="chip-avatar" />
         {role === 'talk' ? <MicIcon strokeWidth={2.2} /> : <PencilIcon strokeWidth={2.2} />}
