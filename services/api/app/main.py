@@ -7,9 +7,9 @@ from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
-from services.api.app.contracts.schemas import JoinRoomRequest, JoinRoomResponse
+from services.api.app.contracts.schemas import IntroSeenRequest, IntroSeenResponse, JoinRoomRequest, JoinRoomResponse
 from services.api.app.game.store import GameError, GameStore
 
 DEFAULT_DB_PATH = Path(gettempdir()) / "heary-drawy-api.sqlite3"
@@ -75,7 +75,13 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = Fa
     @app.get("/api/v1/rooms/{room_id}/state")
     def room_state(room_id: str, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
         snapshot = store.get_snapshot(token, room_id)
-        return snapshot if isinstance(snapshot, dict) else snapshot.model_dump(mode="json", exclude_none=True)
+        return snapshot.model_dump(mode="json", exclude_none=True)
+
+    @app.post("/api/v1/rounds/{round_id}/intro-seen", response_model=IntroSeenResponse)
+    def intro_seen(round_id: str, request: IntroSeenRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
+        if request.round_id != round_id:
+            raise GameError("stale_round", "The round has changed. Refresh to continue.", 409)
+        return store.acknowledge_intro(token, round_id, request.command_id, request.expected_round_version)
 
     @app.websocket("/api/v1/rooms/{room_id}/socket")
     async def room_socket(websocket: WebSocket, room_id: str) -> None:
@@ -101,7 +107,7 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = Fa
             if not isinstance(token, str):
                 raise GameError("session_invalid", "Join again to continue.", 401)
             snapshot = store.get_snapshot(token, room_id)
-            payload = snapshot if isinstance(snapshot, dict) else snapshot.model_dump(mode="json", exclude_none=True)
+            payload = snapshot.model_dump(mode="json", exclude_none=True)
             await websocket.send_json(
                 {
                     "protocol_version": 1,
@@ -121,19 +127,34 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = Fa
             )
             while True:
                 incoming = receive_message(await websocket.receive_text())
-                if not isinstance(incoming, dict) or incoming.get("type") != "state.request" or incoming.get("protocol_version") != 1:
+                try:
+                    if incoming.get("protocol_version") != 1:
+                        raise GameError("payload_invalid", "Unsupported socket message.", 422)
+                    if incoming.get("type") == "round.intro.seen":
+                        raw_payload = incoming.get("payload")
+                        if not isinstance(raw_payload, dict):
+                            raise GameError("payload_invalid", "Invalid intro acknowledgement.", 422)
+                        try:
+                            command = IntroSeenRequest.model_validate({
+                                **raw_payload, "command_id": incoming.get("command_id"),
+                                "round_id": incoming.get("round_id"),
+                            })
+                        except ValidationError as exc:
+                            raise GameError("payload_invalid", "Invalid intro acknowledgement.", 422) from exc
+                        outcome = store.acknowledge_intro(token, command.round_id, command.command_id, command.expected_round_version)
+                        await websocket.send_json({"protocol_version": 1, "type": "command.ack", "command_id": command.command_id,
+                                                   "event_id": f"event_{uuid4().hex}", "payload": outcome})
+                    elif incoming.get("type") != "state.request":
+                        raise GameError("payload_invalid", "This command is not available yet.", 422)
+                    snapshot = store.get_snapshot(token, room_id)
+                    payload = snapshot.model_dump(mode="json", exclude_none=True)
                     await websocket.send_json(
-                        {"protocol_version": 1, "type": "command.error", "payload": {"error": {
-                            "code": "payload_invalid", "message": "This command is not available yet.", "retryable": False,
-                        }}}
+                        {"protocol_version": 1, "type": "state.snapshot", "event_id": payload.get("snapshot_id", f"event_{uuid4().hex}"),
+                         "round_id": payload.get("round", {}).get("round_id"), "payload": payload}
                     )
-                    continue
-                snapshot = store.get_snapshot(token, room_id)
-                payload = snapshot if isinstance(snapshot, dict) else snapshot.model_dump(mode="json", exclude_none=True)
-                await websocket.send_json(
-                    {"protocol_version": 1, "type": "state.snapshot", "event_id": payload.get("snapshot_id", f"event_{uuid4().hex}"),
-                     "round_id": payload.get("round", {}).get("round_id"), "payload": payload}
-                )
+                except GameError as error:
+                    await websocket.send_json({"protocol_version": 1, "type": "command.error",
+                                               "command_id": incoming.get("command_id"), "payload": store.error_payload(error)})
         except GameError as error:
             await websocket.send_json(
                 {

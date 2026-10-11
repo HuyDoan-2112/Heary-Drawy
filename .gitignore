@@ -2,6 +2,7 @@ node_modules/
 apps/web/dist/
 apps/web/node_modules/
 services/api/.venv/
+services/api/.local-demo.sqlite3*
 __pycache__/
 .pytest_cache/
 .ruff_cache/

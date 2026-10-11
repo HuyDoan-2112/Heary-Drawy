@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "dev:web": "npm --workspace @heary-drawy/web run dev",
-    "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.main:app --reload --host 0.0.0.0 --port 8000",
+    "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.main:app --reload --host 127.0.0.1 --port 8000",
+    "dev:api:fixture": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.local_demo:app --reload --host 127.0.0.1 --port 8000",
     "build:web": "npm --workspace @heary-drawy/web run build",
     "lint:web": "npm --workspace @heary-drawy/web run lint",
     "test:web": "npm --workspace @heary-drawy/web run test",

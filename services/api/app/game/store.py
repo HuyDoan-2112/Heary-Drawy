@@ -15,6 +15,8 @@ from uuid import uuid4
 from services.api.app.contracts.schemas import (
     ConnectionStatus,
     DrawingSnapshot,
+    PendingRoomSnapshot,
+    PendingRoomSummary,
     PlayerSummary,
     Role,
     RoleFilteredSnapshot,
@@ -132,6 +134,20 @@ class GameStore:
                   drawing_revision INTEGER NOT NULL,
                   created_at TEXT NOT NULL,
                   UNIQUE(pair_id, round_index)
+                );
+
+                CREATE TABLE IF NOT EXISTS intro_seen (
+                  round_id TEXT NOT NULL REFERENCES rounds(round_id),
+                  player_id TEXT NOT NULL REFERENCES players(player_id),
+                  PRIMARY KEY (round_id, player_id)
+                );
+
+                CREATE TABLE IF NOT EXISTS commands (
+                  player_id TEXT NOT NULL REFERENCES players(player_id),
+                  command_id TEXT NOT NULL,
+                  payload_hash TEXT NOT NULL,
+                  response_json TEXT NOT NULL,
+                  PRIMARY KEY (player_id, command_id)
                 );
                 """
             )
@@ -266,7 +282,7 @@ class GameStore:
                 raise GameError("session_invalid", "Join again to continue.", 401)
             return session, player
 
-    def get_snapshot(self, token: str, room_id: str) -> RoleFilteredSnapshot | dict[str, Any]:
+    def get_snapshot(self, token: str, room_id: str) -> RoleFilteredSnapshot | PendingRoomSnapshot:
         session, player = self.authenticate(token, room_id)
         with self._lock, self._connect() as db:
             pair = db.execute(
@@ -277,11 +293,11 @@ class GameStore:
                 (room_id, player["player_id"], player["player_id"]),
             ).fetchone()
             if pair is None:
-                return {
-                    "session_player_id": player["player_id"],
-                    "admission_status": "waiting_for_teammate",
-                    "room": {"room_id": room_id, "participant": self._player_summary(player).model_dump(mode="json")},
-                }
+                return PendingRoomSnapshot(
+                    session_player_id=player["player_id"],
+                    admission_status="waiting_for_teammate",
+                    room=PendingRoomSummary(room_id=room_id, participant=self._player_summary(player)),
+                )
             round_row = db.execute("SELECT * FROM rounds WHERE round_id = ?", (pair["current_round_id"],)).fetchone()
             teammate_id = pair["player_two_id"] if pair["player_one_id"] == player["player_id"] else pair["player_one_id"]
             teammate = db.execute("SELECT * FROM players WHERE player_id = ?", (teammate_id,)).fetchone()
@@ -308,6 +324,54 @@ class GameStore:
             voice=VoiceState(provider_available=False),
         )
 
+    def acknowledge_intro(self, token: str, round_id: str, command_id: str, expected_version: int) -> dict[str, Any]:
+        session, player = self.authenticate(token)
+        payload_hash = hashlib.sha256(
+            json.dumps([round_id, expected_version], separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        with self._lock, self._connect() as db:
+            try:
+                db.execute("BEGIN IMMEDIATE")
+                prior = db.execute(
+                    "SELECT payload_hash, response_json FROM commands WHERE player_id = ? AND command_id = ?",
+                    (player["player_id"], command_id),
+                ).fetchone()
+                if prior:
+                    if prior["payload_hash"] != payload_hash:
+                        raise GameError("payload_invalid", "Command ID was already used with different data.", 409)
+                    response = json.loads(prior["response_json"])
+                    db.execute("COMMIT")
+                    return response
+                row = db.execute(
+                    """SELECT r.*, p.room_id, p.player_one_id, p.player_two_id
+                       FROM rounds r JOIN pairs p ON p.pair_id = r.pair_id
+                       WHERE r.round_id = ? AND p.current_round_id = ?
+                         AND (p.player_one_id = ? OR p.player_two_id = ?)""",
+                    (round_id, round_id, player["player_id"], player["player_id"]),
+                ).fetchone()
+                if row is None or row["room_id"] != session["room_id"]:
+                    raise GameError("not_authorized", "That round is not available.", 403)
+                if row["phase"] != RoundPhase.role_intro.value:
+                    raise GameError("wrong_phase", "This round has already moved on.", 409)
+                if row["phase_version"] != expected_version:
+                    raise GameError("stale_round", "The round has changed. Refresh to continue.", 409, True)
+                db.execute("INSERT OR IGNORE INTO intro_seen(round_id, player_id) VALUES (?, ?)", (round_id, player["player_id"]))
+                seen = db.execute("SELECT count(*) FROM intro_seen WHERE round_id = ?", (round_id,)).fetchone()[0]
+                if seen == 2:
+                    db.execute(
+                        "UPDATE rounds SET phase = ?, phase_version = phase_version + 1 WHERE round_id = ?",
+                        (RoundPhase.collaborating.value, round_id),
+                    )
+                response = {"round_id": round_id, "phase": RoundPhase.collaborating.value if seen == 2 else RoundPhase.role_intro.value,
+                            "phase_version": expected_version + (1 if seen == 2 else 0)}
+                db.execute("INSERT INTO commands(player_id, command_id, payload_hash, response_json) VALUES (?, ?, ?, ?)",
+                           (player["player_id"], command_id, payload_hash, json.dumps(response)))
+                db.execute("COMMIT")
+                return response
+            except Exception:
+                db.execute("ROLLBACK")
+                raise
+
     def _player_summary(self, player: sqlite3.Row) -> PlayerSummary:
         return PlayerSummary(
             player_id=player["player_id"],
@@ -318,7 +382,7 @@ class GameStore:
 
     def _permissions_for(self, role: Role, phase: RoundPhase) -> list[str]:
         if phase == RoundPhase.role_intro:
-            return ["view_drawing", "role_intro"] if role == Role.speaker else ["edit_drawing", "role_intro"]
+            return ["view_drawing", "role_intro"]
         if phase == RoundPhase.collaborating:
             return ["view_drawing", "hold_to_talk"] if role == Role.speaker else ["edit_drawing", "hold_to_talk"]
         return ["view_drawing"]

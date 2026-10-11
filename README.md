@@ -2,7 +2,7 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: Feature 01 foundation is implemented. Fixture UI screens and a partial local Feature 02 backend prototype exist; real gameplay is not integrated. No deployable room service, drawing relay, voice, object delivery, AI feedback, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
+**Current state: Feature 01 foundation is implemented. Fixture UI screens, a local Feature 02 SQLite authority prototype, and a minimal real join/check-teammate adapter exist; real gameplay is not integrated. No deployable room service, drawing relay, voice, object delivery, AI feedback, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
 
 ## Start here
 
@@ -67,7 +67,7 @@ Run the web fixture shell:
 npm run dev:web
 ```
 
-Open `http://localhost:5173/join` to start the fixture flow. Implemented fixture routes are `/join`, `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, `/play/drawer`, `/checking`, `/result`, and `/grownups`.
+Open `http://localhost:5173/join` to start the fixture flow. For local-only adult/synthetic Room join checks, run `npm run dev:api:fixture` in another terminal (on port 8000) and use the `circle`, `triangle`, `square` code on the join screen. The default API creates no Room; the remaining screens still show fixtures. Do not expose the fixture server to a network or use it with children. Implemented fixture routes are `/join`, `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, `/play/drawer`, `/checking`, `/result`, and `/grownups`.
 
 Run the API shell:
 

@@ -1,6 +1,6 @@
 # HTTP and WebSocket contract draft
 
-Status: proposed v1 integration contract with Feature 01 schemas/fixtures and a partial Feature 02 local backend prototype. Later changes require coordinating the contract owner. `GET /health`, local `POST /api/v1/rooms/join`, `GET /api/v1/rooms/{room_id}/state`, and socket authenticate/state.request are implemented. The rest of this document remains unimplemented. The default app has no provisioned Room; fixture Room creation is test-only.
+Status: proposed v1 integration contract with Feature 01 schemas/fixtures and a partial Feature 02 local backend prototype. Later changes require coordinating the contract owner. `GET /health`, local `POST /api/v1/rooms/join`, `GET /api/v1/rooms/{room_id}/state`, `POST /api/v1/rounds/{round_id}/intro-seen`, and socket authenticate/state.request/round.intro.seen are implemented against SQLite. The rest of this document remains unimplemented. The default app has no provisioned Room; fixture Room creation is test-only.
 
 Related: [product](product.md), [lifecycle](round-lifecycle.md), [data model](data-model.md), [architecture](architecture.md).
 
@@ -21,7 +21,8 @@ Related: [product](product.md), [lifecycle](round-lifecycle.md), [data model](da
 | `GET /health` | Deployment/test | Minimal liveness; no secrets/config dump |
 | `POST /rooms` | Host only | Create controlled private Room; disabled until host authorization is chosen |
 | `POST /rooms/join` | Joining device | Resolve shape code, validate nickname/avatar, create guest session under admission policy |
-| `GET /rooms/{room_id}/state` | Admitted guest / authorized host | Role-filtered current state; host detail requires explicit separate projection |
+| `GET /rooms/{room_id}/state` | Admitted guest | Pending or role-filtered current state; no host projection yet |
+| `POST /rounds/{round_id}/intro-seen` | Current Pair participant | Idempotent role-intro acknowledgement with `command_id`, `round_id`, `expected_round_version`; both participants must acknowledge before collaboration |
 | `POST /pairs/{pair_id}/media-session` | Current Pair member | Issue subscribe-only microphone-capable room session, not an always-open publishing grant |
 | `GET /rounds/{round_id}/object-access` | Authorized role/phase | Private reference/GLB access; denied to Drawer before Reveal |
 | `POST /rounds/{round_id}/drawing-submission` | Current Drawer | Freeze acknowledged revision and create/validate its bounded PNG; idempotent |
@@ -37,7 +38,7 @@ Controlled demo Rooms may be provisioned server-side before a host UI exists. Do
 {
   "shape_code": ["circle", "triangle", "square"],
   "nickname": "BlueFox",
-  "avatar_id": "fox"
+  "avatar_id": "mango"
 }
 ```
 
@@ -95,7 +96,7 @@ Server responses carry `protocol_version`, `type`, an event identity, and `paylo
 | Type | Permission / payload responsibility |
 | --- | --- |
 | `state.request` | Authenticated member; request current permitted projection and drawing snapshot |
-| `round.intro.seen` | Current participant; role intro completed or skipped under the reviewed timing policy |
+| `round.intro.seen` | Current participant; payload `expected_round_version` with envelope `command_id` and `round_id`; both acknowledgements transition to collaboration |
 | `voice.hold.start` | Participant in collaboration; unique `hold_id`, connection epoch, round identity |
 | `voice.hold.end` | Owner of hold; same `hold_id`/epoch; idempotent even before a grant arrives |
 | `drawing.op` | Current Drawer only; expected drawing revision, bounded stroke start/append/end or undo/clear operation |
@@ -127,7 +128,7 @@ No child-facing transcript stream or free-text chat is required. AI status/evide
 Common fields: membership, teammate avatars/nicknames, role, permitted phase/version, connection status, relevant drawing revision, and feature availability. Construct each role projection explicitly.
 
 - Speaker in role intro/collaboration may receive the current object's authorized access plus read-only drawing state.
-- Drawer in role intro/collaboration receives its editable drawing state but **no object identity, rubric, label, URL, or asset bytes**. Omit secret fields entirely; do not send them and hide them with CSS.
+- Before pairing, return a typed `PendingRoomSnapshot` with only the participant and waiting status. In role intro, the Drawer has no edit or voice permission. In collaboration, the Drawer may edit; **no object identity, rubric, label, URL, or asset bytes** are sent before Reveal. Omit secret fields entirely; do not send them and hide them with CSS.
 - Before feedback, results/model evidence are not exposed as a substitute secret checklist.
 - At Reveal, both may receive object/reference/model access, separate child-safe role recaps/tips, and the shared team result. Stars may be absent with explicit neutral/unscored status when analysis/rubric is unavailable.
 - Host projection is separately authorized; guest snapshots never contain exact adult metrics or credentials.

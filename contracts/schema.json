@@ -96,6 +96,61 @@
       "title": "FeedbackSnapshot",
       "type": "object"
     },
+    "IntroSeenRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "command_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Command Id",
+          "type": "string"
+        },
+        "expected_round_version": {
+          "minimum": 0,
+          "title": "Expected Round Version",
+          "type": "integer"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command_id",
+        "round_id",
+        "expected_round_version"
+      ],
+      "title": "IntroSeenRequest",
+      "type": "object"
+    },
+    "IntroSeenResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "phase": {
+          "enum": [
+            "role_intro",
+            "collaborating"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "phase_version": {
+          "title": "Phase Version",
+          "type": "integer"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "round_id",
+        "phase",
+        "phase_version"
+      ],
+      "title": "IntroSeenResponse",
+      "type": "object"
+    },
     "JoinRoomRequest": {
       "additionalProperties": false,
       "properties": {
@@ -196,6 +251,48 @@
         "image_url"
       ],
       "title": "ObjectAccess",
+      "type": "object"
+    },
+    "PendingRoomSnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_status": {
+          "const": "waiting_for_teammate",
+          "title": "Admission Status",
+          "type": "string"
+        },
+        "room": {
+          "$ref": "#/$defs/PendingRoomSummary"
+        },
+        "session_player_id": {
+          "title": "Session Player Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_player_id",
+        "admission_status",
+        "room"
+      ],
+      "title": "PendingRoomSnapshot",
+      "type": "object"
+    },
+    "PendingRoomSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "participant": {
+          "$ref": "#/$defs/PlayerSummary"
+        },
+        "room_id": {
+          "title": "Room Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "room_id",
+        "participant"
+      ],
+      "title": "PendingRoomSummary",
       "type": "object"
     },
     "PlayerSummary": {
@@ -613,11 +710,20 @@
     "error_envelope": {
       "$ref": "#/$defs/ErrorEnvelope"
     },
+    "intro_seen_request": {
+      "$ref": "#/$defs/IntroSeenRequest"
+    },
+    "intro_seen_response": {
+      "$ref": "#/$defs/IntroSeenResponse"
+    },
     "join_room_request": {
       "$ref": "#/$defs/JoinRoomRequest"
     },
     "join_room_response": {
       "$ref": "#/$defs/JoinRoomResponse"
+    },
+    "pending_room_snapshot": {
+      "$ref": "#/$defs/PendingRoomSnapshot"
     },
     "role_filtered_snapshot": {
       "$ref": "#/$defs/RoleFilteredSnapshot"
@@ -629,6 +735,9 @@
   "required": [
     "join_room_request",
     "join_room_response",
+    "intro_seen_request",
+    "intro_seen_response",
+    "pending_room_snapshot",
     "role_filtered_snapshot",
     "drawing_snapshot",
     "socket_envelope",

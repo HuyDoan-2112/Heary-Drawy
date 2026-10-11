@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { avatarAssets, drawyAssets } from './assets';
 import { characterOptions, drawerSnapshot, palette, speakerSnapshot } from './fixtures';
+import { getRoomState, joinRoom, readGuestSession } from '../features/rooms/api';
 
 const routes = [
   { path: '/join', label: 'Character' },
@@ -58,6 +59,33 @@ function AppFrame({ children, activePath }: { children: ReactNode; activePath: R
 
 function JoinScreen() {
   const [selected, setSelected] = useState('mango');
+  const [nickname, setNickname] = useState('Mango');
+  const [shapes, setShapes] = useState<[string, string, string]>(['circle', 'triangle', 'square']);
+  const [message, setMessage] = useState('');
+  const [joining, setJoining] = useState(false);
+  const [session, setSession] = useState(readGuestSession);
+
+  async function checkTeammate() {
+    if (!session) return;
+    const state = await getRoomState(session);
+    if (!state) {
+      setMessage('Cannot check your room right now. Try again in a moment.');
+    } else if ('admission_status' in state) {
+      setMessage('Joined the room. Waiting for your teammate.');
+    } else {
+      setMessage(`You are the ${state.round.role}. Your teammate is ${state.room.teammate?.nickname ?? 'joining'}. The other screens are fixture previews.`);
+    }
+  }
+
+  async function onJoin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (joining) return;
+    setJoining(true);
+    const outcome = await joinRoom({ nickname, avatar_id: selected, shape_code: shapes });
+    if (outcome.session) setSession(outcome.session);
+    setMessage(outcome.error ?? 'Joined the room. Waiting for your teammate. The other screens are fixture previews.');
+    setJoining(false);
+  }
 
   return (
     <section className="screen-card join-screen" aria-labelledby="join-title">
@@ -66,8 +94,31 @@ function JoinScreen() {
         <h1 id="join-title">Pick your character</h1>
         <label className="name-field">
           My name
-          <input defaultValue="Mango" aria-label="My name" />
+          <input value={nickname} maxLength={32} onChange={(event) => setNickname(event.target.value)} aria-label="My name" />
         </label>
+        <form className="room-join-form" onSubmit={onJoin}>
+          <strong>Private room shapes</strong>
+          <div className="shape-fields">
+            {shapes.map((shape, index) => (
+              <label key={index}>
+                Shape {index + 1}
+                <select value={shape} onChange={(event) => {
+                  const next: [string, string, string] = [...shapes];
+                  next[index] = event.target.value;
+                  setShapes(next);
+                }}>
+                  {['circle', 'triangle', 'square', 'star', 'heart'].map((option) =>
+                    <option key={option} value={option}>{option}</option>)}
+                </select>
+              </label>
+            ))}
+          </div>
+          <button className="primary-button mint" type="submit" disabled={joining || !nickname.trim()}>
+            {joining ? 'Joining...' : 'Join room'}
+          </button>
+          {session && <button type="button" className="secondary-button" onClick={checkTeammate}>Check teammate</button>}
+          <p className="join-message" role="status">{message}</p>
+        </form>
       </div>
       <div className="avatar-grid" aria-label="Choose one avatar">
         {characterOptions.map((character) => {

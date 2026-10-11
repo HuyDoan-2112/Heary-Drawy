@@ -1,6 +1,6 @@
 # 02 - Guest rooms, pairing, and round authority
 
-Status: **partial - local backend prototype only**
+Status: **partial - local SQLite authority and join adapter; not deployable**
 Dependencies: [01](01-foundation.md)
 References: [product](../product.md), [API](../api.md), [data model](../data-model.md), [lifecycle](../round-lifecycle.md)
 
@@ -40,6 +40,7 @@ Provide canonical auth/state adapters to the canvas, object, and media lanes; re
 
 Evidence (local Python 3.13, FastAPI TestClient, SQLite temporary files):
 
-- `services/api/tests/test_rooms_and_rounds.py`: concurrent normalized nickname conflict, session resume, two-player pair/role persistence across new app instances, wrong-room denial, Drawer secret omission, blocked host route, socket authentication/origin rejection, refresh after pairing, and expiry checks.
-- `npm run test` and `npm run build:web` run locally. These are not real-device or production-Postgres checks.
-- **Unmet:** Postgres migration/transaction integration, host provisioning/retention decisions, object assignment/access, round intro/Play again transition commands and idempotency, completed frontend join adapter, and real two-device acceptance. Match length and disconnect timeout remain unresolved. `create_app(..., fixture_room=True)` is a test-only known-code room; the default app creates no room. Do not deploy or use with children.
+- `services/api/tests/test_rooms_and_rounds.py`: concurrent normalized nickname conflict, session resume, two-player pair/role persistence across new app instances, wrong-room denial, Drawer secret omission, blocked host route, socket authentication/origin rejection, refresh after pairing, expiry checks, and two-person role-intro transition with idempotent/stale command rejection.
+- `apps/web/src/app/App.test.tsx`: Room join, friendly conflict, session storage and explicit teammate/role refresh. The other screens remain isolated fixture previews; no real gameplay navigation is implied. `services/api/app/local_demo.py` and `npm run dev:api:fixture` provision a known-code Room **only on localhost for adult/synthetic manual checks**; the default app creates no Room.
+- Local live HTTP smoke check: two independent guest joins, waiting state, paired role-filtered state. `npm run test` and `npm run build:web` pass locally. Browser E2E attempted but Chromium could not start because `libnspr4.so` is missing; no device/UI visual check is claimed.
+- **Unmet:** Postgres migrations and transaction integration (no Postgres tooling/instance available), approved host provisioning and retention/reservation policy, true connection presence and live state push, object assignment/access, Play again and subsequent lifecycle transitions, production-grade frontend flow and real two-device acceptance. Match length and disconnect timeout remain unresolved. Do not deploy or use with children.

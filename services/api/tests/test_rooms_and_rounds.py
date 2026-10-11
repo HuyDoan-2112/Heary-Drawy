@@ -103,6 +103,8 @@ def test_wrong_room_guesses_and_drawer_projection_reveal_no_secrets(tmp_path) ->
         client.get(f"/api/v1/rooms/{second['room_id']}/state", headers=auth_header(second["guest_session_token"])).json(),
     ]
     drawer_state = next(state for state in states if state["round"]["role"] == "drawer")
+    assert "edit_drawing" not in drawer_state["round"]["permissions"]
+    assert "hold_to_talk" not in drawer_state["round"]["permissions"]
     serialized = str(drawer_state)
     assert "object_access" not in drawer_state
     assert "object_id" not in serialized
@@ -176,6 +178,78 @@ def test_socket_state_request_refreshes_waiting_snapshot_after_pairing(tmp_path)
         snapshot = websocket.receive_json()
         assert snapshot["type"] == "state.snapshot"
         assert snapshot["payload"]["round"]["phase"] == "role_intro"
+
+
+def test_role_intro_requires_both_acknowledgements_and_is_idempotent(tmp_path) -> None:
+    client = make_client(tmp_path)
+    first = join(client, "Mango").json()
+    second = join(client, "Kiwi", "kiwi").json()
+    url = f"/api/v1/rooms/{first['room_id']}/state"
+    before = client.get(url, headers=auth_header(first["guest_session_token"])).json()
+    round_id = before["round"]["round_id"]
+    phase_version = before["round"]["phase_version"]
+    payload = {"command_id": "intro-1", "round_id": round_id, "expected_round_version": phase_version}
+    path = f"/api/v1/rounds/{round_id}/intro-seen"
+
+    first_ack = client.post(path, json=payload, headers=auth_header(first["guest_session_token"]))
+    assert first_ack.status_code == 200
+    assert first_ack.json()["phase"] == "role_intro"
+    assert client.post(path, json=payload, headers=auth_header(first["guest_session_token"])).json() == first_ack.json()
+    changed = client.post(path, json={**payload, "expected_round_version": 99}, headers=auth_header(first["guest_session_token"]))
+    assert changed.status_code == 409
+
+    restarted = make_client(tmp_path)
+    assert restarted.get(url, headers=auth_header(second["guest_session_token"])).json()["round"]["phase"] == "role_intro"
+    second_ack = restarted.post(path, json=payload, headers=auth_header(second["guest_session_token"]))
+    assert second_ack.status_code == 200
+    assert second_ack.json()["phase"] == "collaborating"
+    after = client.get(url, headers=auth_header(first["guest_session_token"])).json()
+    assert after["round"]["phase_version"] == phase_version + 1
+    if after["round"]["role"] == "drawer":
+        assert "edit_drawing" in after["round"]["permissions"]
+    assert client.post(path, json=payload, headers=auth_header(first["guest_session_token"])).json() == first_ack.json()
+    stale = client.post(path, json={**payload, "command_id": "intro-stale"}, headers=auth_header(first["guest_session_token"]))
+    assert stale.status_code == 409
+    assert stale.json()["error"]["code"] == "wrong_phase"
+
+
+def test_socket_intro_seen_command_requires_both_players(tmp_path) -> None:
+    client = make_client(tmp_path)
+    first = join(client, "Mango").json()
+    second = join(client, "Kiwi", "kiwi").json()
+    path = f"/api/v1/rooms/{first['room_id']}/socket"
+    with client.websocket_connect(path, headers={"origin": "http://testserver"}) as ws:
+        ws.send_json({"protocol_version": 1, "type": "session.authenticate", "payload": {"guest_session_token": first["guest_session_token"]}})
+        ws.receive_json()
+        state = ws.receive_json()["payload"]
+        command = {"protocol_version": 1, "type": "round.intro.seen", "command_id": "intro-ws-1",
+                   "round_id": state["round"]["round_id"],
+                   "payload": {"expected_round_version": state["round"]["phase_version"]}}
+        ws.send_json(command)
+        assert ws.receive_json()["type"] == "command.ack"
+        assert ws.receive_json()["payload"]["round"]["phase"] == "role_intro"
+    with client.websocket_connect(path, headers={"origin": "http://testserver"}) as ws:
+        ws.send_json({"protocol_version": 1, "type": "session.authenticate", "payload": {"guest_session_token": second["guest_session_token"]}})
+        ws.receive_json()
+        ws.receive_json()
+        ws.send_json({**command, "command_id": "intro-ws-2"})
+        assert ws.receive_json()["type"] == "command.ack"
+        assert ws.receive_json()["payload"]["round"]["phase"] == "collaborating"
+
+
+def test_old_or_other_pair_round_cannot_be_acknowledged(tmp_path) -> None:
+    client = make_client(tmp_path)
+    first = join(client, "Mango").json()
+    join(client, "Kiwi", "kiwi")
+    another = join(client, "Sam", "sky").json()
+    join(client, "Jo", "mint")
+    round_id = client.get(f"/api/v1/rooms/{first['room_id']}/state", headers=auth_header(first["guest_session_token"])).json()["round"]["round_id"]
+    path = f"/api/v1/rounds/{round_id}/intro-seen"
+    response = client.post(path, json={"command_id": "guess", "round_id": round_id, "expected_round_version": 1}, headers=auth_header(another["guest_session_token"]))
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "not_authorized"
+    missing = client.post("/api/v1/rounds/round_missing/intro-seen", json={"command_id": "guess", "round_id": "round_missing", "expected_round_version": 1}, headers=auth_header(first["guest_session_token"]))
+    assert missing.status_code == 403
 
 
 def test_socket_rejects_untrusted_origin_and_bad_first_message(tmp_path) -> None:

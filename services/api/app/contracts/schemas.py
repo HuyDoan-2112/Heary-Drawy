@@ -47,6 +47,21 @@ class RoomSummary(BaseModel):
     teammate: PlayerSummary | None = None
 
 
+class PendingRoomSnapshot(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    session_player_id: str
+    admission_status: Literal["waiting_for_teammate"]
+    room: "PendingRoomSummary"
+
+
+class PendingRoomSummary(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    room_id: str
+    participant: PlayerSummary
+
+
 class RoundSummary(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -82,6 +97,22 @@ class JoinRoomResponse(BaseModel):
     guest_session_token: str
     expires_at: str
     admission_status: Literal["admitted"]
+
+
+class IntroSeenRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    command_id: str = Field(min_length=1, max_length=128)
+    round_id: str
+    expected_round_version: int = Field(ge=0)
+
+
+class IntroSeenResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    round_id: str
+    phase: Literal["role_intro", "collaborating"]
+    phase_version: int
 
 
 class Point(BaseModel):
@@ -205,6 +236,9 @@ class ContractBundle(BaseModel):
 
     join_room_request: JoinRoomRequest
     join_room_response: JoinRoomResponse
+    intro_seen_request: IntroSeenRequest
+    intro_seen_response: IntroSeenResponse
+    pending_room_snapshot: PendingRoomSnapshot
     role_filtered_snapshot: RoleFilteredSnapshot
     drawing_snapshot: DrawingSnapshot
     socket_envelope: SocketEnvelope
