@@ -1,9 +1,10 @@
-import { fixtureDrawing, type ResultFixture } from '../fixtures';
+import type { ReactNode } from 'react';
+import { fixtureDrawing, type FixtureStroke, type ResultFixture } from '../fixtures';
 import { AppleSticker, SpinningApple, Strokes } from '../ui/art';
 import { Clouds, Drawy, MusicButton, Page } from '../ui/frame';
 import { HomeIcon, StarIcon, SwapIcon } from '../ui/icons';
 
-export function CheckingScreen() {
+export function CheckingScreen({ live = false }: { live?: boolean } = {}) {
   return (
     <Page hills className="checking-page">
       <Clouds />
@@ -24,10 +25,12 @@ export function CheckingScreen() {
         </div>
         <Drawy pose="search" className="checking-drawy bob" mirrored />
       </div>
-      <div className="page-bottom">
-        {/* Fixture shortcut shown in the approved design until real finalizing state exists. */}
-        <a className="demo-pill" href="/result">Demo: result is ready</a>
-      </div>
+      {live ? null : (
+        <div className="page-bottom">
+          {/* Fixture shortcut shown in the approved design for the preview route. */}
+          <a className="demo-pill" href="/result">Demo: result is ready</a>
+        </div>
+      )}
     </Page>
   );
 }
@@ -60,8 +63,22 @@ function Stars({ count }: { count: 1 | 2 | 3 }) {
   );
 }
 
+export interface ResultActions {
+  /** Hidden after the last round of the match. */
+  onPlayAgain?: () => void;
+  onDone: () => void;
+  /** Friendly status while the teammate decides, e.g. "Waiting for Kiwi to be ready...". */
+  status?: string;
+}
+
 /** Shared team result: 1-3 stars when scoring worked, a friendly neutral result when it did not. */
-export function ResultScreen({ result }: { result: ResultFixture }) {
+export function ResultScreen({ result, picture, drawing = fixtureDrawing, drawingLabel = "Kiwi's drawing", actions }: {
+  result: ResultFixture;
+  picture?: ReactNode;
+  drawing?: FixtureStroke[];
+  drawingLabel?: string;
+  actions?: ResultActions;
+}) {
   return (
     <Page hills className="result-page">
       <Clouds />
@@ -89,41 +106,58 @@ export function ResultScreen({ result }: { result: ResultFixture }) {
       {result.stars ? <Stars count={result.stars} /> : null}
       <div className="result-cards">
         <div className="result-card">
-          <div className="sticker" role="img" aria-label="New sticker: apple">
-            <AppleSticker />
-            <svg className="sticker-sparkle" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2l2 7 7 3-7 3-2 7-2-7-7-3 7-3z" fill="#FFC83D" stroke="#1B2B4B" strokeWidth="1.6" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <div className="result-art">
-            <SpinningApple />
-          </div>
+          {picture ? null : (
+            <div className="sticker" role="img" aria-label="New sticker: apple">
+              <AppleSticker />
+              <svg className="sticker-sparkle" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2l2 7 7 3-7 3-2 7-2-7-7-3 7-3z" fill="#FFC83D" stroke="#1B2B4B" strokeWidth="1.6" strokeLinejoin="round" />
+              </svg>
+            </div>
+          )}
+          <div className="result-art">{picture ?? <SpinningApple />}</div>
           <div className="result-card-label">Photo</div>
         </div>
         <div className="result-card">
           <div className="result-art">
-            <Strokes strokes={fixtureDrawing} strokeWidth={16} className="fill-svg" label="Kiwi's drawing: a red circle with a brown stem" />
+            <Strokes strokes={drawing} strokeWidth={16} className="fill-svg" label={drawingLabel} />
           </div>
-          <div className="result-card-label">Kiwi&apos;s drawing</div>
+          <div className="result-card-label">{drawingLabel}</div>
         </div>
       </div>
       <div className="result-feedback">
         <Drawy pose="cheer" className="result-drawy bob" />
         <div className="speech-bubble" data-neutral={result.stars === null}>
           <span className="speech-tail" aria-hidden="true" />
-          <div className="speech-praise">{result.praise}</div>
-          <div className="speech-question">{result.question}</div>
+          <div className="speech-praise">{actions?.status ?? result.praise}</div>
+          {actions?.status ? null : <div className="speech-question">{result.question}</div>}
         </div>
       </div>
       <div className="page-bottom result-actions">
-        <a className="big-button result-again" href="/play/drawer">
-          <SwapIcon strokeWidth={2.6} />
-          Play again
-        </a>
-        <a className="big-button result-done" href="/join">
-          <HomeIcon />
-          Done
-        </a>
+        {actions ? (
+          <>
+            {actions.onPlayAgain ? (
+              <button type="button" className="big-button result-again" onClick={actions.onPlayAgain}>
+                <SwapIcon strokeWidth={2.6} />
+                Play again
+              </button>
+            ) : null}
+            <button type="button" className="big-button result-done" onClick={actions.onDone}>
+              <HomeIcon />
+              Done
+            </button>
+          </>
+        ) : (
+          <>
+            <a className="big-button result-again" href="/play/drawer">
+              <SwapIcon strokeWidth={2.6} />
+              Play again
+            </a>
+            <a className="big-button result-done" href="/join">
+              <HomeIcon />
+              Done
+            </a>
+          </>
+        )}
       </div>
     </Page>
   );

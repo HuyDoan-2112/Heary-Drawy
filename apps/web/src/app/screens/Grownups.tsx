@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { navigate } from '../router';
 import { Avatar, Page } from '../ui/frame';
 import { BackIcon, CheckIcon, LockIcon, StarIcon } from '../ui/icons';
@@ -55,6 +55,57 @@ export function GrownupsGateScreen() {
         >
           <CheckIcon strokeWidth={2.6} />
           Hold to open
+        </button>
+      </div>
+    </Page>
+  );
+}
+
+/** First screen on a new device: a grown-up enters the Room passcode to unlock it. */
+export function DeviceSetupScreen({ onUnlock }: { onUnlock: (passcode: string) => Promise<string | null> }) {
+  const [passcode, setPasscode] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    if (!passcode.trim() || busy) return;
+    setBusy(true);
+    setError((await onUnlock(passcode)) ?? '');
+    setBusy(false);
+  };
+
+  return (
+    <Page hills className="gate-page">
+      <div className="gate-intro">
+        <div className="gate-lock"><LockIcon strokeWidth={1.9} /></div>
+        <h1>Grown-up setup</h1>
+        <p>Enter the room passcode to unlock this device for play.</p>
+      </div>
+      <form
+        className="gate-card"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void submit();
+        }}
+      >
+        <label className="gate-card-title" htmlFor="room-passcode">Room passcode</label>
+        <input
+          id="room-passcode"
+          className="passcode-input"
+          value={passcode}
+          onChange={(event) => setPasscode(event.target.value)}
+          placeholder="XXXX-XXXX-XXXX"
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+          maxLength={64}
+        />
+        {error ? <p className="join-error" role="alert">{error}</p> : null}
+      </form>
+      <div className="page-bottom">
+        <button type="button" className="gate-hold" onClick={() => void submit()} disabled={busy || !passcode.trim()}>
+          <CheckIcon strokeWidth={2.6} />
+          Unlock
         </button>
       </div>
     </Page>

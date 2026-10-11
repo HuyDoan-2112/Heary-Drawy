@@ -1,6 +1,7 @@
 import type { PointerEvent } from 'react';
 import { useRef, useState } from 'react';
 import type { FixtureStroke } from '../fixtures';
+import { DRAWING_HEIGHT, DRAWING_WIDTH, toPath, type DrawnStroke, type Point } from './drawing';
 
 const APPLE_BODY = 'M100 56C78 38 36 48 32 98c-4 52 32 90 54 86 8-2 10-5 14-5s6 3 14 5c22 4 58-34 54-86-4-50-46-60-68-42z';
 const APPLE_LEAF = 'M104 40c12-18 36-20 50-10-6 16-30 26-50 10z';
@@ -123,27 +124,14 @@ export function Strokes({ strokes, strokeWidth, className, label }: {
   );
 }
 
-type Point = [number, number];
-
-/** Drawings use one 760 x 680 space on every device so strokes never stretch. */
-export const DRAWING_WIDTH = 760;
-export const DRAWING_HEIGHT = 680;
-
-function toPath(points: Point[]): string {
-  const [[x, y], ...rest] = points;
-  if (rest.length === 0) return `M${x} ${y} L${x + 0.1} ${y}`;
-  return `M${x} ${y}${rest.map(([px, py]) => ` L${px} ${py}`).join('')}`;
-}
-
 /**
- * Local finger drawing surface from the approved design. Strokes stay on this device; the
- * authorized drawing relay arrives with Feature 03. The 760 x 680 drawing is centered in the
+ * Finger drawing surface from the approved design. The 760 x 680 drawing is centered in the
  * canvas without stretching, and the child can keep drawing in any extra room around it.
  */
 export function DrawingSurface({ strokes, color, onStroke }: {
   strokes: FixtureStroke[];
   color: string;
-  onStroke: (stroke: FixtureStroke) => void;
+  onStroke: (stroke: DrawnStroke) => void;
 }) {
   const [live, setLive] = useState<Point[] | null>(null);
 
@@ -160,7 +148,7 @@ export function DrawingSurface({ strokes, color, onStroke }: {
   };
 
   const finish = () => {
-    if (live) onStroke({ d: toPath(live), color });
+    if (live) onStroke({ d: toPath(live), color, points: live });
     setLive(null);
   };
 

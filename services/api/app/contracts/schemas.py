@@ -48,10 +48,12 @@ class RoomSummary(BaseModel):
 
 
 class PendingRoomSnapshot(BaseModel):
+    """An admitted player without an active teammate: still waiting, or their teammate left."""
+
     model_config = ConfigDict(extra="forbid")
 
     session_player_id: str
-    admission_status: Literal["waiting_for_teammate"]
+    admission_status: Literal["waiting_for_teammate", "teammate_left"]
     room: "PendingRoomSummary"
 
 
@@ -69,6 +71,9 @@ class RoundSummary(BaseModel):
     role: Role
     phase: RoundPhase
     phase_version: int = Field(ge=0)
+    # Position in the match; Play again is unavailable once round_index reaches total_rounds.
+    round_index: int = Field(ge=1)
+    total_rounds: int = Field(ge=1)
     permissions: list[str] = Field(default_factory=list)
 
 
@@ -79,6 +84,54 @@ class ObjectAccess(BaseModel):
     display_name: str
     image_url: str
     model_url: str | None = None
+
+
+class DeviceEnrollmentRequest(BaseModel):
+    """A grown-up unlocks this device for a Room with the Room passcode."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    passcode: str = Field(min_length=1, max_length=64)
+
+
+class DeviceEnrollmentResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    room_id: str
+    device_token: str
+    expires_at: str
+
+
+class LobbyResponse(BaseModel):
+    """What an unlocked device may know before admission: which characters are taken."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    taken_avatar_ids: list[str]
+
+
+class GuestAdmissionRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Optional; the character name is used when it is blank.
+    nickname: str = Field(default="", max_length=24)
+    avatar_id: str = Field(min_length=1, max_length=32)
+
+
+class GuestAdmissionResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    room_id: str
+    player_id: str
+    guest_session_token: str
+    expires_at: str
+    admission_status: Literal["admitted"]
+
+
+class LeaveResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["left"]
 
 
 class IntroSeenRequest(BaseModel):
@@ -94,6 +147,16 @@ class IntroSeenResponse(BaseModel):
 
     round_id: str
     phase: Literal["role_intro", "collaborating"]
+    phase_version: int
+
+
+class SubmitDrawingResponse(BaseModel):
+    """The Drawer tapped Done. Without AI scoring the round goes straight to the neutral result."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    round_id: str
+    phase: Literal["exploring"]
     phase_version: int
 
 
@@ -238,6 +301,13 @@ class ErrorEnvelope(BaseModel):
 class ContractBundle(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    device_enrollment_request: DeviceEnrollmentRequest
+    device_enrollment_response: DeviceEnrollmentResponse
+    lobby_response: LobbyResponse
+    guest_admission_request: GuestAdmissionRequest
+    guest_admission_response: GuestAdmissionResponse
+    leave_response: LeaveResponse
+    submit_drawing_response: SubmitDrawingResponse
     intro_seen_request: IntroSeenRequest
     intro_seen_response: IntroSeenResponse
     play_again_request: PlayAgainRequest

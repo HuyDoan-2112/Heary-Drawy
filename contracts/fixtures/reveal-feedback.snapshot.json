@@ -22,7 +22,13 @@
     "role": "drawer",
     "phase": "feedback",
     "phase_version": 4,
-    "permissions": ["view_object", "view_drawing", "view_feedback"]
+    "round_index": 1,
+    "total_rounds": 3,
+    "permissions": [
+      "view_object",
+      "view_drawing",
+      "view_feedback"
+    ]
   },
   "drawing": {
     "round_id": "round-demo-1",

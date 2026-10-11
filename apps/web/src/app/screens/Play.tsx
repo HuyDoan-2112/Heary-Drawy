@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { fixtureDrawing, palette, type FixtureStroke } from '../fixtures';
 import { DrawingSurface, SpinningApple, Strokes, TalkBars } from '../ui/art';
+import type { DrawnStroke } from '../ui/drawing';
 import { useIsPhone } from '../ui/device';
 import { Avatar, Drawy, MusicButton, Page } from '../ui/frame';
 import { CameraIcon, CheckIcon, HourglassIcon, MicIcon, PencilIcon, SpinIcon, TrashIcon, UndoIcon } from '../ui/icons';
@@ -11,15 +13,27 @@ type Role = 'talk' | 'draw';
 const SPEAKER = { name: 'Mango', avatarId: 'mango' };
 const DRAWER = { name: 'Kiwi', avatarId: 'kiwi' };
 
-function TopBar({ role }: { role: Role }) {
+export interface Teammate {
+  name: string;
+  avatarId: string;
+}
+
+export interface TalkControls {
+  holding: boolean;
+  start: () => void;
+  stop: () => void;
+}
+
+const fixtureTalk: TalkControls = { holding: false, start: () => undefined, stop: () => undefined };
+
+function TopBar({ role, selfAvatarId }: { role: Role; selfAvatarId: string }) {
   const phone = useIsPhone();
-  const self = role === 'talk' ? SPEAKER : DRAWER;
   const label = role === 'talk' ? 'You talk' : 'You draw';
   return (
     <header className="play-top">
       <MusicButton />
       <div className={`role-chip role-${role}`} role="img" aria-label={label}>
-        <Avatar id={self.avatarId} className="chip-avatar" />
+        <Avatar id={selfAvatarId} className="chip-avatar" />
         {role === 'talk' ? <MicIcon strokeWidth={2.2} /> : <PencilIcon strokeWidth={2.2} />}
         {/* The iPhone design shows only the avatar and icon. */}
         {phone ? null : <span className="role-chip-text">{label}</span>}
@@ -51,22 +65,46 @@ function RoleIntro({ role }: { role: Role }) {
   );
 }
 
-function HoldToTalk({ partner, className }: { partner: string; className: string }) {
+function HoldToTalk({ partner, className, talk }: { partner: string; className: string; talk: TalkControls }) {
   return (
-    <button type="button" className={`hold-button ${className}`} aria-label={`Hold to talk. ${partner} hears you right away`}>
+    <button
+      type="button"
+      className={`hold-button ${className}`}
+      data-holding={talk.holding}
+      aria-label={`Hold to talk. ${partner} hears you right away`}
+      onPointerDown={(event) => {
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        talk.start();
+      }}
+      onPointerUp={talk.stop}
+      onPointerCancel={talk.stop}
+      onLostPointerCapture={() => {
+        if (talk.holding) talk.stop();
+      }}
+      onContextMenu={(event) => event.preventDefault()}
+    >
       <MicIcon strokeWidth={2} />
       Hold to talk
     </button>
   );
 }
 
-export function SpeakerPlayScreen() {
+export interface SpeakerPlayProps {
+  selfAvatarId: string;
+  teammate: Teammate;
+  picture: ReactNode;
+  strokes: FixtureStroke[];
+  teammateTalking: boolean;
+  talk: TalkControls;
+}
+
+export function SpeakerPlayView({ selfAvatarId, teammate, picture, strokes, teammateTalking, talk }: SpeakerPlayProps) {
   const phone = useIsPhone();
 
   return (
     <Page className="play-page speaker-page">
       <h1 className="sr-only">You talk</h1>
-      <TopBar role="talk" />
+      <TopBar role="talk" selfAvatarId={selfAvatarId} />
       <section className="photo-card" aria-label="Photo">
         <div className="photo-chip">
           <CameraIcon strokeWidth={2.2} />
@@ -76,44 +114,75 @@ export function SpeakerPlayScreen() {
           <SpinIcon />
           {phone ? 'Spin' : 'Spin it'}
         </div>
-        <div className="photo-stage">
-          <SpinningApple />
-        </div>
+        <div className="photo-stage">{picture}</div>
       </section>
-      <section className="partner-screen" role="img" aria-label={`${DRAWER.name}'s screen, live`}>
+      <section className="partner-screen" role="img" aria-label={`${teammate.name}'s screen, live`}>
         <div className="partner-bar">
           <span className="live-dot" />
-          <Avatar id={DRAWER.avatarId} className="partner-avatar" />
-          <span className="partner-name">{DRAWER.name}</span>
-          <span className="partner-talking" role="img" aria-label={`${DRAWER.name} is talking`}>
-            <TalkBars count={5} className="bars-live" />
-          </span>
+          <Avatar id={teammate.avatarId} className="partner-avatar" />
+          <span className="partner-name">{teammate.name}</span>
+          {teammateTalking ? (
+            <span className="partner-talking" role="img" aria-label={`${teammate.name} is talking`}>
+              <TalkBars count={5} className="bars-live" />
+            </span>
+          ) : null}
         </div>
         <div className="partner-canvas">
-          <Strokes strokes={fixtureDrawing} strokeWidth={14} className="fill-svg" />
+          <Strokes strokes={strokes} strokeWidth={14} className="fill-svg" />
         </div>
       </section>
-      <HoldToTalk partner={DRAWER.name} className="hold-speaker" />
+      <HoldToTalk partner={teammate.name} className="hold-speaker" talk={talk} />
       <RoleIntro role="talk" />
     </Page>
   );
 }
 
-export function DrawerPlayScreen() {
+export function SpeakerPlayScreen() {
+  return (
+    <SpeakerPlayView
+      selfAvatarId={SPEAKER.avatarId}
+      teammate={DRAWER}
+      picture={<SpinningApple />}
+      strokes={fixtureDrawing}
+      teammateTalking
+      talk={fixtureTalk}
+    />
+  );
+}
+
+export interface DrawerPlayProps {
+  selfAvatarId: string;
+  teammate: Teammate;
+  strokes: FixtureStroke[];
+  teammateTalking: boolean;
+  talk: TalkControls;
+  onStroke: (stroke: DrawnStroke) => void;
+  onUndo: () => void;
+  onClear: () => void;
+  /** Live rounds submit the drawing; the fixture route links to the checking preview. */
+  onDone?: () => void;
+}
+
+export function DrawerPlayView({ selfAvatarId, teammate, strokes, teammateTalking, talk, onStroke, onUndo, onClear, onDone }: DrawerPlayProps) {
   const phone = useIsPhone();
   const [color, setColor] = useState<string>(palette[0].color);
-  const [strokes, setStrokes] = useState<FixtureStroke[]>(fixtureDrawing);
+  const doneContent = (
+    <>
+      <CheckIcon strokeWidth={2.8} />
+      Done!
+    </>
+  );
 
   return (
     <Page className="play-page drawer-page">
       <h1 className="sr-only">You draw</h1>
-      <TopBar role="draw" />
-      <div className="speaker-strip" role="img" aria-label={`${SPEAKER.name} is talking`}>
-        <Avatar id={SPEAKER.avatarId} className="strip-avatar" />
-        <TalkBars count={phone ? 7 : 11} className="bars-strip" />
+      <TopBar role="draw" selfAvatarId={selfAvatarId} />
+      <div className="speaker-strip" role="img" aria-label={teammateTalking ? `${teammate.name} is talking` : teammate.name}>
+        <Avatar id={teammate.avatarId} className="strip-avatar" />
+        {teammateTalking ? <TalkBars count={phone ? 7 : 11} className="bars-strip" /> : null}
       </div>
       <div className="drawing-card">
-        <DrawingSurface strokes={strokes} color={color} onStroke={(stroke) => setStrokes([...strokes, stroke])} />
+        <DrawingSurface strokes={strokes} color={color} onStroke={onStroke} />
       </div>
       <div className="drawing-tools">
         {palette.map((swatch) => (
@@ -127,7 +196,7 @@ export function DrawerPlayScreen() {
             onClick={() => setColor(swatch.color)}
           />
         ))}
-        <button type="button" className="tool-button tool-undo" aria-label="Undo" onClick={() => setStrokes(strokes.slice(0, -1))}>
+        <button type="button" className="tool-button tool-undo" aria-label="Undo" onClick={onUndo}>
           <UndoIcon strokeWidth={2.6} />
         </button>
         {/* Clear is iPad only in the approved design, and it always asks first. */}
@@ -137,7 +206,7 @@ export function DrawerPlayScreen() {
             className="tool-button"
             aria-label="Clear the drawing. Asks first"
             onClick={() => {
-              if (window.confirm('Clear your whole drawing?')) setStrokes([]);
+              if (window.confirm('Clear your whole drawing?')) onClear();
             }}
           >
             <TrashIcon />
@@ -145,13 +214,30 @@ export function DrawerPlayScreen() {
         )}
       </div>
       <div className="drawer-actions">
-        <HoldToTalk partner={SPEAKER.name} className="hold-drawer" />
-        <a className="done-button" href="/checking" aria-label="Done">
-          <CheckIcon strokeWidth={2.8} />
-          Done!
-        </a>
+        <HoldToTalk partner={teammate.name} className="hold-drawer" talk={talk} />
+        {onDone ? (
+          <button type="button" className="done-button" aria-label="Done" onClick={onDone}>{doneContent}</button>
+        ) : (
+          <a className="done-button" href="/checking" aria-label="Done">{doneContent}</a>
+        )}
       </div>
       <RoleIntro role="draw" />
     </Page>
+  );
+}
+
+export function DrawerPlayScreen() {
+  const [strokes, setStrokes] = useState<FixtureStroke[]>(fixtureDrawing);
+  return (
+    <DrawerPlayView
+      selfAvatarId={DRAWER.avatarId}
+      teammate={SPEAKER}
+      strokes={strokes}
+      teammateTalking
+      talk={fixtureTalk}
+      onStroke={(stroke) => setStrokes([...strokes, stroke])}
+      onUndo={() => setStrokes(strokes.slice(0, -1))}
+      onClear={() => setStrokes([])}
+    />
   );
 }

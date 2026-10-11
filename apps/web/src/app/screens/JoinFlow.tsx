@@ -13,8 +13,46 @@ export function BigLink({ href, icon, children }: { href: string; icon: ReactNod
   );
 }
 
-export function PickCharacterScreen() {
-  const [selected, setSelected] = useState<AvatarId>('mango');
+/** The bottom action: a real button in the live game, a link between fixture previews. */
+function NextButton({ onClick, href, icon, children, disabled = false }: {
+  onClick?: () => void;
+  href: string;
+  icon: ReactNode;
+  children: ReactNode;
+  disabled?: boolean;
+}) {
+  if (!onClick) return <BigLink href={href} icon={icon}>{children}</BigLink>;
+  return (
+    <button type="button" className="big-button" onClick={onClick} disabled={disabled}>
+      {icon}
+      {children}
+    </button>
+  );
+}
+
+export interface PickCharacterProps {
+  /** Characters other children in the Room already use. */
+  takenAvatarIds?: string[];
+  /** Joins the Room; resolves with a child-friendly error message when it did not work. */
+  onGo?: (nickname: string, avatarId: AvatarId) => Promise<string | null>;
+}
+
+export function PickCharacterScreen({ takenAvatarIds, onGo }: PickCharacterProps = {}) {
+  const isTaken = (id: AvatarId) =>
+    takenAvatarIds ? takenAvatarIds.includes(id) : Boolean(characterOptions.find((c) => c.id === id)?.pickedBy);
+  const [selected, setSelected] = useState<AvatarId | null>(null);
+  const [nickname, setNickname] = useState('');
+  const [error, setError] = useState('');
+  const [joining, setJoining] = useState(false);
+  const firstFree = characterOptions.find((character) => !isTaken(character.id))?.id ?? null;
+  const current = selected && !isTaken(selected) ? selected : firstFree;
+
+  const go = async () => {
+    if (!onGo || !current || joining) return;
+    setJoining(true);
+    setError((await onGo(nickname, current)) ?? '');
+    setJoining(false);
+  };
 
   return (
     <Page hills className="pick-page">
@@ -30,16 +68,16 @@ export function PickCharacterScreen() {
       <h1 className="page-title pick-title">Who are you?</h1>
       <div className="character-grid">
         {characterOptions.map((character) => {
-          const picked = Boolean(character.pickedBy);
+          const picked = isTaken(character.id);
           return (
             <button
               key={character.id}
               type="button"
               className="character-tile"
-              data-selected={selected === character.id}
+              data-selected={current === character.id}
               data-picked={picked}
               aria-label={picked ? `${character.name}, a friend already picked this` : `I am ${character.name}`}
-              aria-pressed={picked ? undefined : selected === character.id}
+              aria-pressed={picked ? undefined : current === character.id}
               aria-disabled={picked || undefined}
               onClick={() => {
                 if (!picked) setSelected(character.id);
@@ -55,15 +93,25 @@ export function PickCharacterScreen() {
       <div className="page-bottom">
         <label className="name-field">
           <KeyboardIcon strokeWidth={2.2} />
-          <input aria-label="My name, optional" placeholder="My name (optional)" autoComplete="off" />
+          <input
+            aria-label="My name, optional"
+            placeholder="My name (optional)"
+            autoComplete="off"
+            maxLength={24}
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+          />
         </label>
-        <BigLink href="/mic" icon={<ArrowIcon strokeWidth={2.6} />}>Go!</BigLink>
+        {error ? <p className="join-error" role="alert">{error}</p> : null}
+        <NextButton onClick={onGo ? go : undefined} href="/mic" icon={<ArrowIcon strokeWidth={2.6} />} disabled={joining || !current}>
+          Go!
+        </NextButton>
       </div>
     </Page>
   );
 }
 
-export function MicScreen() {
+export function MicScreen({ onContinue }: { onContinue?: () => void } = {}) {
   return (
     <Page hills className="mic-page">
       <Clouds />
@@ -83,7 +131,7 @@ export function MicScreen() {
         text for Drawy&apos;s feedback and is not saved as audio.
       </p>
       <div className="page-bottom">
-        <BigLink href="/mode" icon={<MicIcon strokeWidth={2.2} />}>Turn on mic</BigLink>
+        <NextButton onClick={onContinue} href="/mode" icon={<MicIcon strokeWidth={2.2} />}>Turn on mic</NextButton>
       </div>
     </Page>
   );
@@ -97,7 +145,7 @@ function ModeStars({ filled }: { filled: number }) {
   );
 }
 
-export function ModeScreen() {
+export function ModeScreen({ onContinue }: { onContinue?: () => void } = {}) {
   return (
     <Page hills className="mode-page">
       <Clouds />
@@ -143,7 +191,7 @@ export function ModeScreen() {
         <Drawy pose="talk" className="mode-drawy bob" mirrored />
       </div>
       <div className="page-bottom">
-        <BigLink href="/team" icon={<ArrowIcon strokeWidth={2.6} />}>Go!</BigLink>
+        <NextButton onClick={onContinue} href="/team" icon={<ArrowIcon strokeWidth={2.6} />}>Go!</NextButton>
       </div>
     </Page>
   );

@@ -7,7 +7,7 @@ Status: **all features not started**. This organizes future work; it does not au
 | ID | Deliverable | Integration dependencies | Status |
 | --- | --- | --- | --- |
 | [01](features/01-foundation.md) | Workspace, runnable shells, canonical contracts, fixtures, test commands | None | Implemented |
-| [02](features/02-rooms-and-rounds.md) | Guest sessions, Room admission/pairing, authoritative phases | 01 | Partial - server-private matching; guest admission unresolved; see brief |
+| [02](features/02-rooms-and-rounds.md) | Guest sessions, Room admission/pairing, authoritative phases | 01 | Implemented for demo - passcode admission, 3-round matches; see brief |
 | [03](features/03-drawing.md) | Finger canvas and read-only live relay | 01; 02 for authorized relay | Not started |
 | [04](features/04-object-viewer.md) | Private object/reference access and 3D viewer | 01; 02 for role/phase gates | Not started |
 | [05](features/05-live-voice.md) | Two-device independent hold-to-talk | 01 + 02; real devices/provider account | Not started |

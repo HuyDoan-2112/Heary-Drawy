@@ -7,15 +7,22 @@ from uuid import uuid4
 
 import anyio
 from fastapi import Depends, FastAPI, Header, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
 
 from services.api.app.contracts.schemas import (
+    DeviceEnrollmentRequest,
+    DeviceEnrollmentResponse,
+    GuestAdmissionRequest,
+    GuestAdmissionResponse,
     IntroSeenRequest,
     IntroSeenResponse,
+    LeaveResponse,
+    LobbyResponse,
     PlayAgainRequest,
     PlayAgainResponse,
+    SubmitDrawingResponse,
 )
 from services.api.app.game.store import CommandOutcome, GameError, GameStore
 from services.api.app.realtime import Connection, ConnectionHub
@@ -26,6 +33,12 @@ DEFAULT_ALLOWED_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
 def bearer_token(authorization: Annotated[str | None, Header()] = None) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise GameError("session_invalid", "Join again to continue.", 401)
+    return authorization.removeprefix("Bearer ").strip()
+
+
+def device_token(authorization: Annotated[str | None, Header()] = None) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise GameError("device_not_enrolled", "Ask a grown-up to unlock this device again.", 401)
     return authorization.removeprefix("Bearer ").strip()
 
 
@@ -74,6 +87,7 @@ def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, .
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    # Rooms are provisioned by the operator command, which prints the grown-up passcode.
     @app.post("/api/v1/rooms")
     def create_room_disabled() -> JSONResponse:
         return error_response(
@@ -83,6 +97,36 @@ def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, .
                 403,
             )
         )
+
+    @app.post("/api/v1/device-enrollments", status_code=201, response_model=DeviceEnrollmentResponse)
+    async def enroll_device(request: DeviceEnrollmentRequest) -> dict[str, Any]:
+        enrollment = await run_in_threadpool(store.enroll_device, request.passcode)
+        return {"room_id": enrollment.room_id, "device_token": enrollment.device_token, "expires_at": enrollment.expires_at}
+
+    @app.get("/api/v1/rooms/{room_id}/lobby", response_model=LobbyResponse)
+    async def lobby(room_id: str, token: Annotated[str, Depends(device_token)]) -> dict[str, Any]:
+        return {"taken_avatar_ids": await run_in_threadpool(store.lobby, token, room_id)}
+
+    @app.post("/api/v1/rooms/{room_id}/guests", status_code=201, response_model=GuestAdmissionResponse)
+    async def admit_guest(
+        room_id: str, request: GuestAdmissionRequest, token: Annotated[str, Depends(device_token)]
+    ) -> dict[str, Any]:
+        result = await run_in_threadpool(store.admit_with_device, token, room_id, request.nickname, request.avatar_id)
+        await hub.push_snapshots(result.notify_player_ids)
+        return {
+            "room_id": result.room_id,
+            "player_id": result.player_id,
+            "guest_session_token": result.guest_session_token,
+            "expires_at": result.expires_at,
+            "admission_status": result.admission_status,
+        }
+
+    @app.post("/api/v1/session/leave", response_model=LeaveResponse)
+    async def leave(token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
+        player_id, teammates = await run_in_threadpool(store.leave, token)
+        await hub.close_player(player_id)
+        await hub.push_snapshots(teammates)
+        return {"status": "left"}
 
     @app.get("/api/v1/rooms/{room_id}/state")
     async def room_state(room_id: str, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
@@ -106,10 +150,21 @@ def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, .
     async def play_again(round_id: str, request: PlayAgainRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
         return await run_round_command(store.play_again, token, round_id, request)
 
+    @app.post("/api/v1/rounds/{round_id}/submit", response_model=SubmitDrawingResponse)
+    async def submit(round_id: str, request: IntroSeenRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
+        return await run_round_command(store.submit_drawing, token, round_id, request)
+
+    @app.get("/api/v1/rounds/{round_id}/picture")
+    async def picture(round_id: str, token: Annotated[str, Depends(bearer_token)]) -> Response:
+        svg = await run_in_threadpool(store.picture_svg, token, round_id)
+        return Response(svg, media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+
     socket_commands: dict[str, tuple[type[IntroSeenRequest], Callable[[str, str, str, int], CommandOutcome]]] = {
         "round.intro.seen": (IntroSeenRequest, store.acknowledge_intro),
         "round.play_again": (PlayAgainRequest, store.play_again),
+        "round.submit": (IntroSeenRequest, store.submit_drawing),
     }
+    drawing_actions = {"drawing.add": "add", "drawing.undo": "undo", "drawing.clear": "clear"}
 
     async def handle_socket_message(connection: Connection, incoming: dict[str, Any]) -> None:
         if incoming.get("protocol_version") != 1:
@@ -117,6 +172,25 @@ def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, .
         message_type = incoming.get("type")
         if message_type == "state.request":
             await hub.send_snapshot(connection)
+            return
+        payload = incoming.get("payload")
+        if message_type in drawing_actions:
+            round_id = incoming.get("round_id")
+            stroke = payload.get("stroke") if isinstance(payload, dict) else None
+            if not isinstance(round_id, str):
+                raise GameError("payload_invalid", "That message could not be read.", 422)
+            members = await run_in_threadpool(
+                store.edit_drawing, connection.token, round_id, drawing_actions[message_type], stroke
+            )
+            await hub.push_snapshots(members)
+            return
+        if message_type in ("voice.signal", "voice.talking"):
+            # Peer-to-peer voice setup and talking indicators are relayed to the teammate, never stored.
+            members = await run_in_threadpool(store.pair_member_ids, connection.player_id)
+            await hub.relay(
+                (m for m in members if m != connection.player_id),
+                {"protocol_version": 1, "type": message_type, "payload": payload if isinstance(payload, dict) else {}},
+            )
             return
         if message_type not in socket_commands:
             raise GameError("payload_invalid", "This command is not available yet.", 422)

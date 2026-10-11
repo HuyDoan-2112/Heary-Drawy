@@ -4,9 +4,16 @@ import { clearGuestSession, type GuestSession } from './api';
 
 export type RoomSnapshot = PendingRoomSnapshot | RoleFilteredSnapshot;
 export type ConnectionState = 'connecting' | 'live' | 'reconnecting' | 'ended';
-export type RoundCommand = 'round.intro.seen' | 'round.play_again';
+export type RoundCommand = 'round.intro.seen' | 'round.play_again' | 'round.submit';
+export type RelayListener = (type: string, payload: Record<string, unknown>) => void;
 
 const MAX_BACKOFF_MS = 8000;
+
+// randomUUID needs a secure context; plain-http LAN testing falls back to random hex.
+function commandId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 interface ServerMessage {
   type: string;
@@ -23,6 +30,7 @@ export function useRoomConnection(session: GuestSession | null) {
   const [connection, setConnection] = useState<ConnectionState>('connecting');
   const [notice, setNotice] = useState('');
   const socketRef = useRef<WebSocket | null>(null);
+  const relayListeners = useRef(new Set<RelayListener>());
 
   useEffect(() => {
     if (!session) return undefined;
@@ -31,6 +39,7 @@ export function useRoomConnection(session: GuestSession | null) {
     let timer: number | undefined;
 
     const open = () => {
+      let authenticated = false;
       setConnection(attempt === 0 ? 'connecting' : 'reconnecting');
       const scheme = window.location.protocol === 'https:' ? 'wss' : 'ws';
       const socket = new WebSocket(`${scheme}://${window.location.host}/api/v1/rooms/${encodeURIComponent(session.room_id)}/socket`);
@@ -44,13 +53,17 @@ export function useRoomConnection(session: GuestSession | null) {
       };
       socket.onmessage = (event: MessageEvent<string>) => {
         const message: ServerMessage = JSON.parse(event.data);
-        if (message.type === 'state.snapshot') {
+        if (message.type === 'session.authenticated') {
+          authenticated = true;
+        } else if (message.type === 'voice.signal' || message.type === 'voice.talking') {
+          relayListeners.current.forEach((listener) => listener(message.type, message.payload ?? {}));
+        } else if (message.type === 'state.snapshot') {
           attempt = 0;
           setConnection('live');
           setSnapshot(message.payload as unknown as RoomSnapshot);
         } else if (message.type === 'command.error') {
           const code = message.payload?.error?.code;
-          if (code === 'session_invalid' || code === 'not_authorized') {
+          if (code === 'session_invalid' || !authenticated) {
             stopped = true;
             clearGuestSession();
             setConnection('ended');
@@ -78,6 +91,12 @@ export function useRoomConnection(session: GuestSession | null) {
     };
   }, [session]);
 
+  const send = useCallback((type: string, payload: Record<string, unknown> = {}, roundId?: string) => {
+    const socket = socketRef.current;
+    if (socket?.readyState !== WebSocket.OPEN) return;
+    socket.send(JSON.stringify({ protocol_version: 1, type, round_id: roundId, payload }));
+  }, []);
+
   const sendRoundCommand = useCallback((type: RoundCommand) => {
     const socket = socketRef.current;
     if (!snapshot || !('round' in snapshot) || socket?.readyState !== WebSocket.OPEN) return;
@@ -85,11 +104,18 @@ export function useRoomConnection(session: GuestSession | null) {
     socket.send(JSON.stringify({
       protocol_version: 1,
       type,
-      command_id: crypto.randomUUID(),
+      command_id: commandId(),
       round_id: snapshot.round.round_id,
       payload: { expected_round_version: snapshot.round.phase_version },
     }));
   }, [snapshot]);
 
-  return { snapshot, connection, notice, sendRoundCommand };
+  const onRelay = useCallback((listener: RelayListener) => {
+    relayListeners.current.add(listener);
+    return () => {
+      relayListeners.current.delete(listener);
+    };
+  }, []);
+
+  return { snapshot, connection, notice, send, sendRoundCommand, onRelay };
 }

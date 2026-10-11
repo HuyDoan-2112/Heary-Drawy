@@ -30,42 +30,72 @@ afterEach(() => {
 });
 
 describe('approved screen flow', () => {
-  it('starts on the character picker with Mango selected and a friend-picked Kiwi', async () => {
-    const user = userEvent.setup();
-    renderAt('/join');
-
-    expect(screen.getByRole('heading', { name: 'Who are you?' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'I am Mango' })).toHaveAttribute('aria-pressed', 'true');
-    const kiwi = screen.getByRole('button', { name: 'Kiwi, a friend already picked this' });
-    expect(within(kiwi).getByText('Picked')).toBeInTheDocument();
-
-    await user.click(kiwi);
-    expect(screen.getByRole('button', { name: 'I am Mango' })).toHaveAttribute('aria-pressed', 'true');
-
-    await user.click(screen.getByRole('button', { name: 'I am Plum' }));
-    expect(screen.getByRole('button', { name: 'I am Plum' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('textbox', { name: 'My name, optional' })).toHaveAttribute('placeholder', 'My name (optional)');
-  });
-
-  it('resumes a stored guest session on the team screen without joining again', async () => {
-    window.sessionStorage.setItem('heary_guest_session', JSON.stringify({
-      room_id: 'room-test', player_id: 'player-test', guest_session_token: 'test-token', expires_at: '2099-01-01T00:00:00Z',
-    }));
-    const fetchMock = vi.fn();
+  it('asks a grown-up for the room passcode on a new device, then shows the character picker', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url === '/api/v1/device-enrollments') {
+        return new Response(JSON.stringify({ room_id: 'room-1', device_token: 'device-token', expires_at: '2099-01-01T00:00:00Z' }), { status: 201 });
+      }
+      return new Response(JSON.stringify({ taken_avatar_ids: ['kiwi'] }));
+    });
     vi.stubGlobal('fetch', fetchMock);
-    renderAt('/join');
-
-    expect(await screen.findByText('Connecting to your room...')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Your team' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Who are you?' })).not.toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it('walks from the character picker to the Speaker play screen without a full page load', async () => {
     const user = userEvent.setup();
     renderAt('/join');
 
-    await user.click(screen.getByRole('link', { name: 'Go!' }));
+    expect(screen.getByRole('heading', { name: 'Grown-up setup' })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Room passcode' }), 'abcd-efgh-jkmn');
+    await user.click(screen.getByRole('button', { name: 'Unlock' }));
+
+    expect(await screen.findByRole('heading', { name: 'Who are you?' })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/device-enrollments', expect.objectContaining({ body: JSON.stringify({ passcode: 'abcd-efgh-jkmn' }) }));
+    const kiwi = await screen.findByRole('button', { name: 'Kiwi, a friend already picked this' });
+    expect(kiwi).toHaveTextContent('Picked');
+    expect(screen.getByRole('button', { name: 'I am Mango' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows a friendly error for a wrong passcode', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      error: { code: 'passcode_invalid', message: 'That passcode did not work. Check it and try again.', retryable: false },
+    }), { status: 401 })));
+    const user = userEvent.setup();
+    renderAt('/join');
+
+    await user.type(screen.getByRole('textbox', { name: 'Room passcode' }), 'nope');
+    await user.click(screen.getByRole('button', { name: 'Unlock' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('That passcode did not work.');
+  });
+
+  it('joins the room from the character picker and continues to the mic step', async () => {
+    window.sessionStorage.setItem('heary_device_enrollment', JSON.stringify({
+      room_id: 'room-1', device_token: 'device-token', expires_at: '2099-01-01T00:00:00Z',
+    }));
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.endsWith('/guests')) {
+        return new Response(JSON.stringify({
+          room_id: 'room-1', player_id: 'player-1', guest_session_token: 'guest-token', expires_at: '2099-01-01T00:00:00Z', admission_status: 'admitted',
+        }), { status: 201 });
+      }
+      return new Response(JSON.stringify({ taken_avatar_ids: [] }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderAt('/join');
+
+    await user.click(await screen.findByRole('button', { name: 'I am Plum' }));
+    await user.type(screen.getByRole('textbox', { name: 'My name, optional' }), 'Sam');
+    await user.click(screen.getByRole('button', { name: 'Go!' }));
+
+    expect(await screen.findByRole('heading', { name: 'Can we hear you?' })).toBeInTheDocument();
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/rooms/room-1/guests', expect.objectContaining({
+      body: JSON.stringify({ nickname: 'Sam', avatar_id: 'plum' }),
+    }));
+    expect(JSON.parse(window.sessionStorage.getItem('heary_guest_session')!).guest_session_token).toBe('guest-token');
+  });
+
+  it('walks the fixture preview from the mic step to the Speaker play screen without a full page load', async () => {
+    const user = userEvent.setup();
+    renderAt('/mic');
+
     expect(screen.getByRole('heading', { name: 'Can we hear you?' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('link', { name: 'Turn on mic' }));
@@ -159,17 +189,21 @@ describe('approved screen flow', () => {
 
   it('remembers the music choice across screens', async () => {
     const user = userEvent.setup();
-    renderAt('/join');
+    renderAt('/mic');
 
     await user.click(screen.getByRole('button', { name: 'Music on or off' }));
     expect(screen.getByRole('button', { name: 'Music on or off' })).toHaveAttribute('aria-pressed', 'false');
 
-    await user.click(screen.getByRole('link', { name: 'Go!' }));
+    await user.click(screen.getByRole('link', { name: 'Turn on mic' }));
     expect(screen.getByRole('button', { name: 'Music on or off' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('opens the sample parent area only after a 3 second grown-up hold', async () => {
     const user = userEvent.setup();
+    window.sessionStorage.setItem('heary_device_enrollment', JSON.stringify({
+      room_id: 'room-1', device_token: 'device-token', expires_at: '2099-01-01T00:00:00Z',
+    }));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ taken_avatar_ids: [] }))));
     renderAt('/join');
     await user.click(screen.getByRole('link', { name: 'Grown-ups' }));
     expect(screen.getByRole('heading', { name: 'Grown-ups only' })).toBeInTheDocument();

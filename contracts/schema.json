@@ -9,6 +9,47 @@
       "title": "ConnectionStatus",
       "type": "string"
     },
+    "DeviceEnrollmentRequest": {
+      "additionalProperties": false,
+      "description": "A grown-up unlocks this device for a Room with the Room passcode.",
+      "properties": {
+        "passcode": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Passcode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "passcode"
+      ],
+      "title": "DeviceEnrollmentRequest",
+      "type": "object"
+    },
+    "DeviceEnrollmentResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "device_token": {
+          "title": "Device Token",
+          "type": "string"
+        },
+        "expires_at": {
+          "title": "Expires At",
+          "type": "string"
+        },
+        "room_id": {
+          "title": "Room Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "room_id",
+        "device_token",
+        "expires_at"
+      ],
+      "title": "DeviceEnrollmentResponse",
+      "type": "object"
+    },
     "DrawingSnapshot": {
       "additionalProperties": false,
       "properties": {
@@ -96,6 +137,63 @@
       "title": "FeedbackSnapshot",
       "type": "object"
     },
+    "GuestAdmissionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "avatar_id": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Avatar Id",
+          "type": "string"
+        },
+        "nickname": {
+          "default": "",
+          "maxLength": 24,
+          "title": "Nickname",
+          "type": "string"
+        }
+      },
+      "required": [
+        "avatar_id"
+      ],
+      "title": "GuestAdmissionRequest",
+      "type": "object"
+    },
+    "GuestAdmissionResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_status": {
+          "const": "admitted",
+          "title": "Admission Status",
+          "type": "string"
+        },
+        "expires_at": {
+          "title": "Expires At",
+          "type": "string"
+        },
+        "guest_session_token": {
+          "title": "Guest Session Token",
+          "type": "string"
+        },
+        "player_id": {
+          "title": "Player Id",
+          "type": "string"
+        },
+        "room_id": {
+          "title": "Room Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "room_id",
+        "player_id",
+        "guest_session_token",
+        "expires_at",
+        "admission_status"
+      ],
+      "title": "GuestAdmissionResponse",
+      "type": "object"
+    },
     "IntroSeenRequest": {
       "additionalProperties": false,
       "properties": {
@@ -151,6 +249,39 @@
       "title": "IntroSeenResponse",
       "type": "object"
     },
+    "LeaveResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "const": "left",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "LeaveResponse",
+      "type": "object"
+    },
+    "LobbyResponse": {
+      "additionalProperties": false,
+      "description": "What an unlocked device may know before admission: which characters are taken.",
+      "properties": {
+        "taken_avatar_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Taken Avatar Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "taken_avatar_ids"
+      ],
+      "title": "LobbyResponse",
+      "type": "object"
+    },
     "ObjectAccess": {
       "additionalProperties": false,
       "properties": {
@@ -189,9 +320,13 @@
     },
     "PendingRoomSnapshot": {
       "additionalProperties": false,
+      "description": "An admitted player without an active teammate: still waiting, or their teammate left.",
       "properties": {
         "admission_status": {
-          "const": "waiting_for_teammate",
+          "enum": [
+            "waiting_for_teammate",
+            "teammate_left"
+          ],
           "title": "Admission Status",
           "type": "string"
         },
@@ -553,13 +688,25 @@
         "round_id": {
           "title": "Round Id",
           "type": "string"
+        },
+        "round_index": {
+          "minimum": 1,
+          "title": "Round Index",
+          "type": "integer"
+        },
+        "total_rounds": {
+          "minimum": 1,
+          "title": "Total Rounds",
+          "type": "integer"
         }
       },
       "required": [
         "round_id",
         "role",
         "phase",
-        "phase_version"
+        "phase_version",
+        "round_index",
+        "total_rounds"
       ],
       "title": "RoundSummary",
       "type": "object"
@@ -692,6 +839,32 @@
       "title": "Stroke",
       "type": "object"
     },
+    "SubmitDrawingResponse": {
+      "additionalProperties": false,
+      "description": "The Drawer tapped Done. Without AI scoring the round goes straight to the neutral result.",
+      "properties": {
+        "phase": {
+          "const": "exploring",
+          "title": "Phase",
+          "type": "string"
+        },
+        "phase_version": {
+          "title": "Phase Version",
+          "type": "integer"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "round_id",
+        "phase",
+        "phase_version"
+      ],
+      "title": "SubmitDrawingResponse",
+      "type": "object"
+    },
     "VoiceState": {
       "additionalProperties": false,
       "properties": {
@@ -732,17 +905,35 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
+    "device_enrollment_request": {
+      "$ref": "#/$defs/DeviceEnrollmentRequest"
+    },
+    "device_enrollment_response": {
+      "$ref": "#/$defs/DeviceEnrollmentResponse"
+    },
     "drawing_snapshot": {
       "$ref": "#/$defs/DrawingSnapshot"
     },
     "error_envelope": {
       "$ref": "#/$defs/ErrorEnvelope"
     },
+    "guest_admission_request": {
+      "$ref": "#/$defs/GuestAdmissionRequest"
+    },
+    "guest_admission_response": {
+      "$ref": "#/$defs/GuestAdmissionResponse"
+    },
     "intro_seen_request": {
       "$ref": "#/$defs/IntroSeenRequest"
     },
     "intro_seen_response": {
       "$ref": "#/$defs/IntroSeenResponse"
+    },
+    "leave_response": {
+      "$ref": "#/$defs/LeaveResponse"
+    },
+    "lobby_response": {
+      "$ref": "#/$defs/LobbyResponse"
     },
     "pending_room_snapshot": {
       "$ref": "#/$defs/PendingRoomSnapshot"
@@ -758,9 +949,19 @@
     },
     "socket_envelope": {
       "$ref": "#/$defs/SocketEnvelope"
+    },
+    "submit_drawing_response": {
+      "$ref": "#/$defs/SubmitDrawingResponse"
     }
   },
   "required": [
+    "device_enrollment_request",
+    "device_enrollment_response",
+    "lobby_response",
+    "guest_admission_request",
+    "guest_admission_response",
+    "leave_response",
+    "submit_drawing_response",
     "intro_seen_request",
     "intro_seen_response",
     "play_again_request",

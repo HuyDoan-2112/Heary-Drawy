@@ -1,17 +1,79 @@
 import type { ReactNode } from 'react';
-import { Fragment, useEffect, useState } from 'react';
-import { readGuestSession } from '../features/rooms/api';
-import { RoomPanel } from '../features/rooms/RoomPanel';
+import { Fragment, useCallback, useEffect, useState } from 'react';
+import { LiveGame } from '../features/game/LiveGame';
+import {
+  admitGuest,
+  ApiError,
+  clearDeviceEnrollment,
+  clearGuestSession,
+  enrollDevice,
+  fetchTakenAvatars,
+  readDeviceEnrollment,
+  readGuestSession,
+} from '../features/rooms/api';
 import { scoredResult } from './fixtures';
 import { CheckingScreen, ResultScreen } from './screens/Finish';
-import { GrownupsGateScreen, ParentsScreen } from './screens/Grownups';
+import { DeviceSetupScreen, GrownupsGateScreen, ParentsScreen } from './screens/Grownups';
 import { FixtureTeamScreen, MicScreen, ModeScreen, PickCharacterScreen } from './screens/JoinFlow';
 import { DrawerPlayScreen, SpeakerPlayScreen } from './screens/Play';
 import { MusicProvider } from './ui/frame';
 
 function JoinRoute() {
-  const [session] = useState(readGuestSession);
-  return session ? <RoomPanel key={session.guest_session_token} session={session} /> : <PickCharacterScreen />;
+  const [device, setDevice] = useState(readDeviceEnrollment);
+  const [session, setSession] = useState(readGuestSession);
+  const [justJoined, setJustJoined] = useState(false);
+  const [taken, setTaken] = useState<string[]>([]);
+
+  const forgetDevice = useCallback(() => {
+    clearDeviceEnrollment();
+    setDevice(null);
+  }, []);
+  const exitGame = useCallback(() => {
+    clearGuestSession();
+    setSession(null);
+  }, []);
+
+  useEffect(() => {
+    if (!device || session) return;
+    fetchTakenAvatars(device)
+      .then(setTaken)
+      .catch((error) => {
+        if (error instanceof ApiError && error.code === 'device_not_enrolled') forgetDevice();
+      });
+  }, [device, session, forgetDevice]);
+
+  if (session) return <LiveGame key={session.guest_session_token} session={session} startAtMic={justJoined} onExit={exitGame} />;
+  if (!device) {
+    return (
+      <DeviceSetupScreen
+        onUnlock={async (passcode) => {
+          try {
+            setDevice(await enrollDevice(passcode));
+            return null;
+          } catch (error) {
+            return error instanceof ApiError ? error.message : 'That did not work. Try again.';
+          }
+        }}
+      />
+    );
+  }
+  return (
+    <PickCharacterScreen
+      takenAvatarIds={taken}
+      onGo={async (nickname, avatarId) => {
+        try {
+          const admitted = await admitGuest(device, nickname, avatarId);
+          setJustJoined(true);
+          setSession(admitted);
+          return null;
+        } catch (error) {
+          if (error instanceof ApiError && error.code === 'device_not_enrolled') forgetDevice();
+          fetchTakenAvatars(device).then(setTaken).catch(() => undefined);
+          return error instanceof ApiError ? error.message : 'That did not work. Try again.';
+        }
+      }}
+    />
+  );
 }
 
 const routes: Record<string, () => ReactNode> = {

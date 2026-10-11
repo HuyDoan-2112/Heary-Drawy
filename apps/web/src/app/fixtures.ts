@@ -48,6 +48,8 @@ export const drawerSnapshot: RoleFilteredSnapshot = {
     role: 'drawer',
     phase: 'collaborating',
     phase_version: 1,
+    round_index: 1,
+    total_rounds: 3,
     permissions: ['edit_drawing', 'hold_to_talk'],
   },
   drawing: {

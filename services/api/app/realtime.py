@@ -52,6 +52,21 @@ class ConnectionHub:
         if not connections:
             del self._by_player[connection.player_id]
 
+    async def close_player(self, player_id: str) -> None:
+        """Close a player's sockets after their session ends; their loops then unregister them."""
+        for connection in tuple(self._by_player.get(player_id, ())):
+            self.unregister(connection)
+            try:
+                async with connection.send_lock:
+                    await connection.websocket.close(code=1000)
+            except RuntimeError:
+                pass  # Already closed by the client.
+
+    async def relay(self, player_ids: Iterable[str], message: dict) -> None:
+        """Forward a message as-is to the players' sockets."""
+        targets = [c for player_id in player_ids for c in tuple(self._by_player.get(player_id, ()))]
+        await asyncio.gather(*(c.send(message) for c in targets), return_exceptions=True)
+
     async def send_snapshot(self, connection: Connection) -> None:
         snapshot = await run_in_threadpool(
             self._store.get_snapshot, connection.token, connection.room_id, self.connected_player_ids()

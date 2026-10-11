@@ -200,12 +200,12 @@ def test_expired_session_and_room_are_rejected(client: TestClient, database_url:
 
 def test_private_matching_is_scoped_to_server_provisioned_room(client: TestClient, database_url: str) -> None:
     store = client.app.state.game_store
-    second_room = store.provision_room(timedelta(days=1))
+    second_room = store.provision_room(timedelta(days=1)).room_id
     first = admit(client, "Mango").json()
     outsider = admit(client, "Mango", room_id=second_room).json()
     assert state_of(client, first)["admission_status"] == "waiting_for_teammate"
     assert state_of(client, outsider)["admission_status"] == "waiting_for_teammate"
-    next_guest = admit(client, "Kiwi").json()
+    next_guest = admit(client, "Kiwi", "kiwi").json()
     assert state_of(client, first)["room"]["pair_id"] == state_of(client, next_guest)["room"]["pair_id"]
     assert state_of(client, outsider)["admission_status"] == "waiting_for_teammate"
     denied = client.get(f"/api/v1/rooms/{first['room_id']}/state", headers=auth_header(outsider))
@@ -215,7 +215,7 @@ def test_private_matching_is_scoped_to_server_provisioned_room(client: TestClien
         store.provision_room(timedelta(0))
     with psycopg.connect(database_url) as db:
         db.execute("update rooms set expires_at = '2000-01-01T00:00:00Z'")
-    assert admit(client, "Sam").status_code == 404
+    assert admit(client, "Sam", "sky").status_code == 404
 
 
 def test_socket_state_request_refreshes_waiting_snapshot_after_pairing(client: TestClient) -> None:

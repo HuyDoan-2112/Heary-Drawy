@@ -22,7 +22,13 @@
     "role": "speaker",
     "phase": "collaborating",
     "phase_version": 2,
-    "permissions": ["view_object", "view_drawing", "hold_to_talk"]
+    "round_index": 1,
+    "total_rounds": 3,
+    "permissions": [
+      "view_object",
+      "view_drawing",
+      "hold_to_talk"
+    ]
   },
   "drawing": {
     "round_id": "round-demo-1",
@@ -33,8 +39,14 @@
         "color": "#2f5dff",
         "width": 8,
         "points": [
-          {"x": 0.31, "y": 0.44},
-          {"x": 0.38, "y": 0.48}
+          {
+            "x": 0.31,
+            "y": 0.44
+          },
+          {
+            "x": 0.38,
+            "y": 0.48
+          }
         ]
       }
     ]
@@ -42,7 +54,9 @@
   "voice": {
     "mic_permission": "granted",
     "active_local_hold_ids": [],
-    "remote_speaking_player_ids": ["player-kiwi"],
+    "remote_speaking_player_ids": [
+      "player-kiwi"
+    ],
     "provider_available": false
   },
   "object_access": {

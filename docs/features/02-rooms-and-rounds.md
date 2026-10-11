@@ -1,6 +1,6 @@
 # 02 - Guest rooms, pairing, and round authority
 
-Status: **partial - server-private matching verified; guest admission/bootstrap unresolved**
+Status: **implemented for the demo - grown-up passcode admission; not yet checked on real devices**
 Dependencies: [01](01-foundation.md)
 References: [product](../product.md), [API](../api.md), [data model](../data-model.md), [lifecycle](../round-lifecycle.md)
 
@@ -33,6 +33,14 @@ Canvas rendering, real voice, 3D rendering, AI, bot implementation, and unrestri
 - [x] Drawer projections exclude object/rubric/asset metadata before Reveal (current role-intro projection; object assignment awaits Feature 04).
 - [x] Guest nicknames never grant host actions/metrics (host routes remain disabled).
 - [x] Duplicate/stale commands cannot reroll roles or repeat transitions (current intro and Play again commands, local Postgres).
+
+## Decisions (2026-10-11)
+
+- **Admission:** `npm run db:provision-room` prints a Room passcode once (only its hash is stored). A grown-up enters it on each device (`POST /api/v1/device-enrollments`), which unlocks that device; the child then picks a free character and an optional name (`POST /api/v1/rooms/{room_id}/guests`). Characters and names are unique among a Room's admitted players. Re-joining on a device releases its previous player.
+- **Match length:** 3 rounds. Play again is refused after round 3; Done (`POST /api/v1/session/leave`) ends the session and tells the teammate.
+- **Play again disconnect timeout:** 60 s then a grown-up help screen - decided but **not built yet** (demo scope).
+- **Retention:** sessions and device unlocks last 24 h; `npm run db:close-room` closes a Room early; `npm run db:cleanup` deletes Rooms 7 days after they close or expire.
+- **Demo round slice (Features 03-08, minimal):** the server picks a secret picture per round (speaker-only until reveal), relays live strokes, Done reveals the picture with the neutral result (no AI scoring), and hold-to-talk uses peer-to-peer WebRTC with socket signaling (no TURN). Timer, transcription, AI feedback, and limits are out of scope for now.
 
 ## Handoff
 

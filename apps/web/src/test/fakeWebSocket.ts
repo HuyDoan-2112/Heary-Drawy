@@ -44,8 +44,24 @@ export class FakeWebSocket {
   }
 }
 
-export function snapshotMessage(overrides: { phase?: string; role?: string; ready?: { self_ready: boolean; teammate_ready: boolean }; teammate?: string; teammateStatus?: string; version?: number } = {}) {
-  const { phase = 'role_intro', role = 'drawer', ready, teammate = 'Kiwi', teammateStatus = 'connected', version = 1 } = overrides;
+interface SnapshotOverrides {
+  phase?: string;
+  role?: string;
+  ready?: { self_ready: boolean; teammate_ready: boolean };
+  teammate?: string;
+  teammateStatus?: string;
+  version?: number;
+  permissions?: string[];
+  roundIndex?: number;
+  strokes?: unknown[];
+  extra?: Record<string, unknown>;
+}
+
+export function snapshotMessage(overrides: SnapshotOverrides = {}) {
+  const {
+    phase = 'role_intro', role = 'drawer', ready, teammate = 'Kiwi', teammateStatus = 'connected', version = 1,
+    permissions = [], roundIndex = 1, strokes = [], extra = {},
+  } = overrides;
   return {
     protocol_version: 1,
     type: 'state.snapshot',
@@ -58,9 +74,10 @@ export function snapshotMessage(overrides: { phase?: string; role?: string; read
         participant: { player_id: 'player-1', nickname: 'Mango', avatar_id: 'mango', connection_status: 'connected' },
         teammate: { player_id: 'player-2', nickname: teammate, avatar_id: 'kiwi', connection_status: teammateStatus },
       },
-      round: { round_id: 'round-1', role, phase, phase_version: version, permissions: [] },
-      drawing: { round_id: 'round-1', revision: 0, strokes: [] },
+      round: { round_id: 'round-1', role, phase, phase_version: version, round_index: roundIndex, total_rounds: 3, permissions },
+      drawing: { round_id: 'round-1', revision: strokes.length, strokes },
       ...(ready ? { ready } : {}),
+      ...extra,
     },
   };
 }

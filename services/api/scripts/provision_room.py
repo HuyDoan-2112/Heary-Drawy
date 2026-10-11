@@ -1,6 +1,7 @@
-"""Provision a server-private Room. Does not grant a guest admission or publish a join route.
+"""Provision a server-private Room and print its grown-up passcode.
 
-The lifetime is explicit because the retention policy remains unresolved.
+The passcode is shown once and only its hash is stored. A grown-up enters it on each device
+to unlock that device for the Room; it is not for children.
 """
 
 import argparse
@@ -20,10 +21,11 @@ def main() -> int:
         print("DATABASE_URL is required", file=sys.stderr)
         return 1
     try:
-        room_id = GameStore(url).provision_room(timedelta(hours=args.ttl_hours))
+        room = GameStore(url).provision_room(timedelta(hours=args.ttl_hours))
     except ValueError as exc:
         parser.error(str(exc))
-    print(f"room_id={room_id}")
+    print(f"room_id={room.room_id}")
+    print(f"passcode={room.passcode}  (shown once; give it only to the grown-ups running the session)")
     return 0
 
 

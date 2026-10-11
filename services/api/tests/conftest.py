@@ -61,6 +61,8 @@ def client(database_url: str) -> Iterator["TestClient"]:
     from services.api.app.main import create_app
 
     app = create_app(database_url, allowed_origins=("http://testserver",))
-    app.state.test_room_id = app.state.game_store.provision_room(timedelta(days=1))
+    room = app.state.game_store.provision_room(timedelta(days=1))
+    app.state.test_room_id = room.room_id
+    app.state.test_room_passcode = room.passcode
     with TestClient(app) as test_client:
         yield test_client
