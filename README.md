@@ -2,7 +2,7 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: Feature 01 foundation is implemented. A minimal React/Vite web shell, FastAPI health endpoint, canonical contract schemas, generated frontend types, and sanitized fixtures exist. No playable room, drawing relay, voice, object delivery, AI feedback, deployment, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
+**Current state: Feature 01 foundation is implemented. A minimal React/Vite fixture UI covers UI-01 through UI-09 screens, alongside a FastAPI health endpoint, canonical contract schemas, generated frontend types, and sanitized fixtures. No playable room, drawing relay, voice, object delivery, AI feedback, deployment, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
 
 ## Start here
 
@@ -61,11 +61,13 @@ Generate contract artifacts after changing `services/api/app/contracts/schemas.p
 npm run generate:contracts
 ```
 
-Run the web shell:
+Run the web fixture shell:
 
 ```bash
 npm run dev:web
 ```
+
+Open `http://localhost:5173/join` to start the fixture flow. Implemented fixture routes are `/join`, `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, and `/play/drawer`.
 
 Run the API shell:
 

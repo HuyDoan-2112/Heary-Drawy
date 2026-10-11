@@ -1,6 +1,6 @@
 # Frontend UI ticket map
 
-Status: planning aid. This breaks [`frontend-ui-implementation-spec.md`](frontend-ui-implementation-spec.md) into independently reviewable implementation tickets. It does not authorize building ahead of the feature dependencies in [`implementation-plan.md`](implementation-plan.md).
+Status: planning aid. UI-01 through UI-09 are implemented as fixture-backed screens. This breaks [`frontend-ui-implementation-spec.md`](frontend-ui-implementation-spec.md) into independently reviewable implementation tickets. It does not authorize building ahead of the feature dependencies in [`implementation-plan.md`](implementation-plan.md).
 
 ## Purpose
 
@@ -12,15 +12,15 @@ Do not treat the frontend UI spec as one large ticket. Each ticket below has exp
 
 | Ticket | Slice | Required before starting | Integrates later with |
 | --- | --- | --- | --- |
-| UI-01 | Frontend shell and design tokens | Feature 01 workspace | Feature 08 app integration |
-| UI-02 | Typed UI fixtures and role-filtered state | Feature 01 contracts/fixtures | Features 02-08 |
-| UI-03 | Pick character | UI-01, UI-02 | Feature 02 join |
-| UI-04 | Turn on mic | UI-01 | Feature 05 media |
-| UI-05 | Pick mode | UI-01, UI-02 | Feature 02 room setup |
-| UI-06 | Meet teammate | UI-02 | Feature 02 pairing |
-| UI-07 | Role intro | UI-02 | Feature 02 lifecycle |
-| UI-08 | Speaker play shell | UI-02 | Features 02, 03, 04, 05 |
-| UI-09 | Drawer play shell | UI-02 | Features 03, 05 |
+| UI-01 | Frontend shell and design tokens | Feature 01 workspace | Implemented as fixture-backed shell |
+| UI-02 | Typed UI fixtures and role-filtered state | Feature 01 contracts/fixtures | Implemented as safe fixture state |
+| UI-03 | Pick character | UI-01, UI-02 | Implemented as fixture-backed screen |
+| UI-04 | Turn on mic | UI-01 | Implemented as fixture-backed screen |
+| UI-05 | Pick mode | UI-01, UI-02 | Implemented as fixture-backed screen |
+| UI-06 | Meet teammate | UI-02 | Implemented as fixture-backed screen |
+| UI-07 | Role intro | UI-02 | Implemented as fixture-backed screen |
+| UI-08 | Speaker play shell | UI-02 | Implemented as fixture-backed shell |
+| UI-09 | Drawer play shell | UI-02 | Implemented as fixture-backed shell |
 | UI-10 | Drawing component integration | Feature 03 | Feature 08 round integration |
 | UI-11 | Object viewer integration | Feature 04 | Feature 08 Reveal/reward |
 | UI-12 | Hold-to-talk integration | Feature 05 | Feature 08 round integration |
