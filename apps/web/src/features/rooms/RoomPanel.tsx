@@ -1,8 +1,11 @@
+import { TeamScreen } from '../../app/screens/JoinFlow';
+import { ArrowIcon, SwapIcon } from '../../app/ui/icons';
 import type { GuestSession } from './api';
 import { useRoomConnection } from './useRoomConnection';
 
 const ROLE_LABEL = { speaker: 'Speaker', drawer: 'Drawer' } as const;
 
+/** Live room state for an admitted guest, shown on the approved "meet your teammate" screen. */
 export function RoomPanel({ session }: { session: GuestSession }) {
   const { snapshot, connection, notice, sendRoundCommand } = useRoomConnection(session);
 
@@ -31,17 +34,37 @@ export function RoomPanel({ session }: { session: GuestSession }) {
 
   const canAcknowledge = snapshot && 'round' in snapshot && connection === 'live' && !snapshot.ready?.self_ready;
   const phase = snapshot && 'round' in snapshot ? snapshot.round.phase : null;
+  const participant = snapshot?.room.participant;
+  const teammate = snapshot && 'round' in snapshot ? snapshot.room.teammate : null;
+
+  let action = null;
+  if (canAcknowledge && phase === 'role_intro') {
+    action = (
+      <button type="button" className="big-button" onClick={() => sendRoundCommand('round.intro.seen')}>
+        <ArrowIcon strokeWidth={2.6} />
+        Let&apos;s play!
+      </button>
+    );
+  } else if (canAcknowledge && phase === 'exploring') {
+    action = (
+      <button type="button" className="big-button" onClick={() => sendRoundCommand('round.play_again')}>
+        <SwapIcon strokeWidth={2.6} />
+        Play again
+      </button>
+    );
+  }
 
   return (
-    <div className="room-panel" aria-live="polite">
-      <p role="status">{statusText()}</p>
-      {canAcknowledge && phase === 'role_intro' ? (
-        <button type="button" className="primary-button" onClick={() => sendRoundCommand('round.intro.seen')}>I&apos;m ready!</button>
-      ) : null}
-      {canAcknowledge && phase === 'exploring' ? (
-        <button type="button" className="primary-button" onClick={() => sendRoundCommand('round.play_again')}>Play again</button>
-      ) : null}
-      {notice ? <p role="alert" className="join-message">{notice}</p> : null}
-    </div>
+    <TeamScreen
+      self={participant ? { name: participant.nickname, avatarId: participant.avatar_id } : null}
+      teammate={teammate ? { name: teammate.nickname, avatarId: teammate.avatar_id } : null}
+      status={(
+        <div className="room-status" aria-live="polite">
+          <p role="status">{statusText()}</p>
+          {notice ? <p role="alert">{notice}</p> : null}
+        </div>
+      )}
+      action={action}
+    />
   );
 }

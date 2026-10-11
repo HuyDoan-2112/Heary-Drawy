@@ -46,7 +46,7 @@ describe('RoomPanel', () => {
     const socket = connect();
     act(() => socket.receive(snapshotMessage({ version: 3 })));
 
-    await userEvent.setup().click(screen.getByRole('button', { name: "I'm ready!" }));
+    await userEvent.setup().click(screen.getByRole('button', { name: "Let's play!" }));
     expect(socket.sent[1]).toEqual({
       protocol_version: 1, type: 'round.intro.seen', command_id: 'command-1', round_id: 'round-1',
       payload: { expected_round_version: 3 },
@@ -54,7 +54,7 @@ describe('RoomPanel', () => {
 
     act(() => socket.receive(snapshotMessage({ version: 3, ready: { self_ready: true, teammate_ready: false } })));
     expect(screen.getByRole('status')).toHaveTextContent('Waiting for Kiwi to be ready...');
-    expect(screen.queryByRole('button', { name: "I'm ready!" })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: "Let's play!" })).not.toBeInTheDocument();
   });
 
   it('shows presence and a friendly Play again flow', async () => {
@@ -73,7 +73,7 @@ describe('RoomPanel', () => {
 
     act(() => first.drop());
     expect(screen.getByRole('status')).toHaveTextContent('Reconnecting...');
-    expect(screen.queryByRole('button', { name: "I'm ready!" })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: "Let's play!" })).not.toBeInTheDocument();
     act(() => { vi.advanceTimersByTime(1000); });
 
     expect(FakeWebSocket.instances).toHaveLength(2);

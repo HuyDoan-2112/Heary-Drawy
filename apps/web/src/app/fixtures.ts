@@ -10,17 +10,18 @@ export interface CharacterOption {
   pickedBy?: string;
 }
 
+// Order matches the approved character picker (artifact/design/Main.dc.html).
 export const characterOptions: CharacterOption[] = [
+  { id: 'mango', name: 'Mango' },
+  { id: 'kiwi', name: 'Kiwi', pickedBy: 'teammate' },
+  { id: 'plum', name: 'Plum' },
+  { id: 'pepper', name: 'Pepper' },
+  { id: 'berry', name: 'Berry' },
+  { id: 'coco', name: 'Coco' },
   { id: 'sky', name: 'Sky' },
+  { id: 'lemon', name: 'Lemon' },
   { id: 'mint', name: 'Mint' },
   { id: 'grape', name: 'Grape' },
-  { id: 'berry', name: 'Berry' },
-  { id: 'pepper', name: 'Pepper' },
-  { id: 'lemon', name: 'Lemon' },
-  { id: 'mango', name: 'Mango' },
-  { id: 'plum', name: 'Plum' },
-  { id: 'coco', name: 'Coco' },
-  { id: 'kiwi', name: 'Kiwi', pickedBy: 'teammate' },
 ];
 
 export const drawerSnapshot: RoleFilteredSnapshot = {
@@ -89,4 +90,41 @@ export const speakerSnapshot: RoleFilteredSnapshot = {
   },
 };
 
-export const palette = ['#1B2B4B', '#6C4DF6', '#FF6F59', '#2EC4A0', '#FFC83D', '#FFFFFF'];
+export const palette = [
+  { color: '#E5483D', label: 'Red' },
+  { color: '#FFD23F', label: 'Yellow' },
+  { color: '#35B26B', label: 'Green' },
+  { color: '#2F80ED', label: 'Blue' },
+  { color: '#8B5A2B', label: 'Brown' },
+  { color: '#1B2B4B', label: 'Black' },
+] as const;
+
+export interface FixtureStroke {
+  d: string;
+  color: string;
+}
+
+/** Fixture drawing from the approved design: a red circle with a brown stem, in a 760 x 680 space. */
+export const fixtureDrawing: FixtureStroke[] = [
+  { d: 'M169 381 A211 211 0 1 0 591 381 A211 211 0 1 0 169 381', color: '#E5483D' },
+  { d: 'M380 174 C380 128 393 103 414 81', color: '#8B5A2B' },
+];
+
+export interface ResultFixture {
+  /** 1-3 when scoring succeeded, null for the friendly neutral result. */
+  stars: 1 | 2 | 3 | null;
+  praise: string;
+  question: string;
+}
+
+export const scoredResult: ResultFixture = {
+  stars: 2,
+  praise: 'You got the red, round shape!',
+  question: 'Hmm... what else is at the top?',
+};
+
+export const neutralResult: ResultFixture = {
+  stars: null,
+  praise: 'Drawy had trouble checking this one, but you still finished the round together!',
+  question: "Let's look at the picture and try another one.",
+};
