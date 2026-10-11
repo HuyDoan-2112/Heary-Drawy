@@ -87,6 +87,7 @@ Rules:
 - Lines are for young children: warm, simple words, at most 12 words each.
 - Praise something specific that went well. A question may point at one missing feature without giving the answer.
 - Never judge drawing skill or neatness, never compare the two children, never mention the picture's name.
+- Never comment on how a child's voice or speech sounds (no clarity, loudness, or pronunciation); talk about what they said.
 """
 
 
