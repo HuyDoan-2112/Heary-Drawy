@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Two-device demo on one Wi-Fi network: starts the API (local Postgres, a fresh Room and its
-// passcode) and serves the web app over HTTPS on the LAN so iOS Safari allows the microphone.
+// passcode), builds the web app, and serves the build over HTTPS on the LAN so iOS Safari allows
+// the microphone.
 //
 //   npm run demo                      # Room lasts 8 hours
 //   DEMO_HOST=192.168.1.20 npm run demo   # add an address this machine cannot see itself
@@ -49,6 +50,18 @@ const hosts = [...new Set([...extraHosts, ...(wslNat ? [windowsIp] : lanAddresse
 // The room socket only accepts pages it knows, so allow exactly the addresses we serve.
 const origins = ['localhost', '127.0.0.1', ...hosts].map((host) => `https://${host}:${PORT}`);
 
+// Devices get a production build, not the dev server. The dev server re-bundles dependencies while
+// it runs, and a device page that misses its reload then cannot load lazy code such as the 3D
+// viewer (504 Outdated Optimize Dep) - the Drawer saw a flat picture at Reveal. Code changes
+// therefore need a demo restart.
+const vite = `${root}node_modules/.bin/vite`;
+console.log('Building the web app...');
+try {
+  execFileSync(vite, ['build', '--logLevel', 'warn'], { cwd: `${root}apps/web`, stdio: 'inherit' });
+} catch {
+  process.exit(1);
+}
+
 const children = [
   spawn('npm', ['run', 'dev:api:local', '--', '--room-hours', process.env.DEMO_ROOM_HOURS ?? '8'], {
     cwd: root,
@@ -56,7 +69,7 @@ const children = [
     detached: true,
     env: { ...process.env, ALLOWED_ORIGINS: origins.join(',') },
   }),
-  spawn(`${root}node_modules/.bin/vite`, ['--host', '0.0.0.0', '--port', String(PORT), '--strictPort'], {
+  spawn(vite, ['preview', '--host', '0.0.0.0', '--port', String(PORT), '--strictPort'], {
     cwd: `${root}apps/web`,
     stdio: 'inherit',
     detached: true,
