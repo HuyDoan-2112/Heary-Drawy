@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Draw what you hear</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+button:focus-visible,a:focus-visible{outline:4px solid #6C4DF6;outline-offset:4px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@keyframes live{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.35);opacity:0}}
+@keyframes popin{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes introOut{0%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.05);visibility:hidden}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}.intro{display:none}}
+</style>
+</helmet>
+<div style="width: 820px; height: 1180px; box-sizing: border-box; position: relative; overflow: hidden; background: #D9F0FF; font-family: 'Fredoka', system-ui, sans-serif; color: #1B2B4B">
+  <button type="button" onClick="{{ toggleMusic }}" aria-label="Music on or off" aria-pressed="{{ musicOn }}" style="{{ musicStyle }}">
+    <sc-for list="{{ musicOnList }}" as="mo" hint-placeholder-count="1"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></sc-for>
+    <sc-for list="{{ musicOffList }}" as="mf" hint-placeholder-count="0"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg></sc-for>
+  </button>
+  <div style="position: absolute; left: 114px; top: 24px; width: 250px; height: 72px; box-sizing: border-box; border-radius: 36px; border: 4px solid #1B2B4B; background: #6C4DF6; color: #fff; display: flex; align-items: center; justify-content: center; gap: 8px" role="img" aria-label="You draw">
+    <svg width="58" height="58" viewBox="0 0 72 72" role="img" aria-label="Kiwi" style="flex: none; overflow: visible"><circle cx="36" cy="38" r="31" fill="#A47148" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><circle cx="36" cy="38" r="25" fill="#8BD34A"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(0 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(36 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(72 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(108 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(144 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(180 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(216 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(252 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(288 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(324 36 38)"/><circle cx="36" cy="38" r="12" fill="#D9F2A6"/><circle cx="30" cy="36" r="3.8" fill="#1B2B4B"/><circle cx="31.2" cy="34.8" r="1.2" fill="#fff"/><circle cx="42" cy="36" r="3.8" fill="#1B2B4B"/><circle cx="43.2" cy="34.8" r="1.2" fill="#fff"/><path d="M30.0 43 q6 6 12 0" fill="none" stroke="#1B2B4B" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="44" r="3" fill="#FF8FA8" opacity=".85"/><circle cx="48" cy="44" r="3" fill="#FF8FA8" opacity=".85"/></svg>
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14 7l3 3"/></svg>
+    <span style="font-size: 26px; font-weight: 700; white-space: nowrap">You draw</span>
+  </div>
+  <div style="position: absolute; left: 376px; top: 24px; width: 414px; height: 72px; box-sizing: border-box; padding: 0 22px; border-radius: 36px; border: 4px solid #1B2B4B; background: #fff; display: flex; align-items: center; gap: 14px" role="img" aria-label="Time left">
+    <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1B2B4B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12M6 21h12M7 3v4l5 5-5 5v4M17 3v4l-5 5 5 5v4"/></svg>
+    <div style="flex: 1; height: 22px; border-radius: 12px; background: #E4EEF8; overflow: hidden"><div style="width: 38%; height: 100%; border-radius: 12px; background: #FFC83D"></div></div>
+  </div>
+
+  <div style="position: absolute; left: 30px; top: 112px; width: 760px; height: 76px; box-sizing: border-box; padding: 0 22px; border-radius: 38px; border: 4px solid #1B2B4B; background: #fff; display: flex; align-items: center; gap: 16px" role="img" aria-label="Mango is talking">
+    <svg width="60" height="60" viewBox="0 0 72 72" role="img" aria-label="Mango" style="flex: none; overflow: visible"><path d="M17 44 C13 24 29 10 45 12 C60 14 65 31 60 47 C55 61 39 68 27 62 C20 58 18 52 17 44 Z" fill="#FFC23D" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><path d="M46 17 C55 20 60 29 59 39 C52 34 47 26 46 17 Z" fill="#FF8A3D" opacity=".55"/><path d="M40 13 C40 9 41 6 43 4" fill="none" stroke="#6B4423" stroke-width="3" stroke-linecap="round"/><path d="M42 7 c4 -8 14 -9 20 -4 c-6 7 -14 8 -20 4 z" fill="#35B26B" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><circle cx="30" cy="37" r="3.8" fill="#1B2B4B"/><circle cx="31.2" cy="35.8" r="1.2" fill="#fff"/><circle cx="46" cy="37" r="3.8" fill="#1B2B4B"/><circle cx="47.2" cy="35.8" r="1.2" fill="#fff"/><path d="M32.0 46 q6 6 12 0" fill="none" stroke="#1B2B4B" stroke-width="3" stroke-linecap="round"/><circle cx="23" cy="44" r="3.6" fill="#FF8FA8" opacity=".85"/><circle cx="53" cy="44" r="3.6" fill="#FF8FA8" opacity=".85"/></svg>
+    <div style="display: flex; align-items: center; gap: 6px; height: 56px" aria-hidden="true"><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .0s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .1s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .2s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .3s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .4s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .5s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .6s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .7s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .8s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .9s"></span><span style="width: 10px; height: 50px; border-radius: 5px; background: #6C4DF6; animation: wave 1s ease-in-out infinite; animation-delay: .10s"></span></div>
+  </div>
+
+  <div style="position: absolute; left: 30px; top: 204px; width: 760px; height: 680px; box-sizing: border-box; border: 5px solid #1B2B4B; border-radius: 36px; background: #fff; box-shadow: 0 8px 0 #1B2B4B; overflow: hidden">
+    <sc-for list="{{ strokes }}" as="s" hint-placeholder-count="2">
+      <svg viewBox="0 0 760 680" preserveAspectRatio="none" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none" aria-hidden="true">
+        <path d="{{ s.d }}" fill="none" stroke="{{ s.color }}" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </sc-for>
+    <div role="img" aria-label="Drawing area" style="position: absolute; inset: 0; touch-action: none; cursor: crosshair" onPointerDown="{{ down }}" onPointerMove="{{ move }}" onPointerUp="{{ up }}" onPointerLeave="{{ up }}"></div>
+  </div>
+
+  <div style="position: absolute; left: 30px; top: 906px; width: 760px; display: flex; align-items: center; gap: 16px">
+    <sc-for list="{{ swatches }}" as="sw" hint-placeholder-count="6">
+      <button type="button" aria-label="{{ sw.label }}" aria-pressed="{{ sw.on }}" onClick="{{ sw.pick }}" style="{{ sw.style }}"></button>
+    </sc-for>
+    <button type="button" onClick="{{ undo }}" aria-label="Undo" style="margin-left: auto; width: 74px; height: 74px; border-radius: 50%; border: 4px solid #1B2B4B; background: #fff; color: #1B2B4B; box-shadow: 0 4px 0 #1B2B4B; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+    <button type="button" aria-label="Clear the drawing. Asks first" style="width: 74px; height: 74px; border-radius: 50%; border: 4px solid #1B2B4B; background: #fff; color: #1B2B4B; box-shadow: 0 4px 0 #1B2B4B; display: flex; align-items: center; justify-content: center; padding: 0"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+  </div>
+
+  <button type="button" aria-label="Hold to talk. Mango hears you right away" style="position: absolute; left: 30px; top: 1012px; width: 470px; height: 140px; border-radius: 70px; border: 6px solid #1B2B4B; background: #FFC83D; color: #1B2B4B; box-shadow: 0 8px 0 #1B2B4B; display: flex; gap: 16px; align-items: center; justify-content: center; font-size: 44px; font-weight: 700; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none">
+    <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+    Hold to talk
+  </button>
+  <a href="06b-Checking.dc.html" aria-label="Done" style="position: absolute; left: 520px; top: 1012px; width: 270px; height: 140px; box-sizing: border-box; border-radius: 70px; border: 6px solid #1B2B4B; background: #2EC4A0; color: #1B2B4B; box-shadow: 0 8px 0 #1B2B4B; display: flex; gap: 12px; align-items: center; justify-content: center; font-size: 46px; font-weight: 700">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>
+    Done!
+  </a>
+
+  <div class="intro" style="position: absolute; inset: 0; z-index: 20; pointer-events: none; background: #D9F0FF; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; animation: introOut 3.4s ease forwards">
+    <div style="display: flex; gap: 10px" role="img" aria-label="Round 1 of 3"><span style="width: 30px; height: 30px; border-radius: 50%; border: 4px solid #1B2B4B; background: #FFC83D"></span><span style="width: 30px; height: 30px; border-radius: 50%; border: 4px solid #1B2B4B; background: #fff"></span><span style="width: 30px; height: 30px; border-radius: 50%; border: 4px solid #1B2B4B; background: #fff"></span></div>
+    <div style="width: 300px; height: 300px; box-sizing: border-box; border-radius: 50%; border: 7px solid #1B2B4B; background: #6C4DF6; color: #fff; box-shadow: 0 12px 0 #1B2B4B; display: flex; align-items: center; justify-content: center; animation: popin .7s ease-out both"><svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M14 7l3 3"/></svg></div>
+    <div style="font-size: 92px; font-weight: 700; line-height: 1">You draw!</div>
+    <div style="position: absolute; right: -56px; bottom: -30px; animation: bob 2s ease-in-out infinite"><svg width="380" height="380" viewBox="0 0 200 200" role="img" aria-label="Drawy" style="flex: none; overflow: visible"><g transform="translate(200 0) scale(-1 1)"><g transform="rotate(0 100 120)"><path d="M86 54 C72 40 72 20 84 10 C92 26 96 40 94 54 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M96 52 C92 32 98 14 112 6 C114 24 110 40 104 52 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M106 56 C114 40 128 32 142 36 C134 48 122 56 110 58 Z" fill="#6C4DF6" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="84" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="116" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M42 112 C26 132 32 162 56 170 C58 148 54 128 42 112 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="100" cy="120" rx="62" ry="66" fill="#FF6F59" stroke="#1B2B4B" stroke-width="5"/><ellipse cx="100" cy="144" rx="36" ry="34" fill="#FFE3A3"/><ellipse cx="66" cy="124" rx="9" ry="6" fill="#FF9FB3"/><ellipse cx="134" cy="124" rx="9" ry="6" fill="#FF9FB3"/><path d="M68 102 q12 -16 24 0M108 102 q12 -16 24 0" fill="none" stroke="#1B2B4B" stroke-width="5" stroke-linecap="round"/><path d="M89 120 Q100 148 113 122 Z" fill="#E5483D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M88 110 Q100 100 114 110 Q115 120 104 125 L89 118 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M154 112 C178 98 186 72 178 52 C162 66 150 88 146 108 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M164 70 L184 32 L193 37 L173 75 Z" fill="#6C4DF6" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><path d="M184 32 L192 18 L193 37 Z" fill="#4B33C8" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><path d="M20 42 L22.4 47.6 L28 50 L22.4 52.4 L20 58 L17.6 52.4 L12 50 L17.6 47.6 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="2.5" stroke-linejoin="round"/></g></g></svg></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = {
+      color: '#E5483D',
+      live: null,
+      music: true,
+      strokes: [
+        { d: 'M169 381 A211 211 0 1 0 591 381 A211 211 0 1 0 169 381', color: '#E5483D' },
+        { d: 'M380 174 C380 128 393 103 414 81', color: '#8B5A2B' }
+      ]
+    };
+  }
+
+  toD(pts) {
+    if (!pts.length) return '';
+    const first = pts[0];
+    let d = 'M' + first[0] + ' ' + first[1];
+    if (pts.length === 1) return d + ' L' + (first[0] + 0.1) + ' ' + first[1];
+    for (let i = 1; i < pts.length; i++) d += ' L' + pts[i][0] + ' ' + pts[i][1];
+    return d;
+  }
+
+  point(e) {
+    const r = e.currentTarget.getBoundingClientRect();
+    return [
+      Math.round(((e.clientX - r.left) / r.width) * 760),
+      Math.round(((e.clientY - r.top) / r.height) * 680)
+    ];
+  }
+
+  renderVals() {
+    const s = this.state;
+    const palette = [
+      ['#E5483D', 'Red'], ['#FFD23F', 'Yellow'], ['#35B26B', 'Green'],
+      ['#2F80ED', 'Blue'], ['#8B5A2B', 'Brown'], ['#1B2B4B', 'Black']
+    ];
+    const swatches = palette.map(([c, label]) => {
+      const on = s.color === c;
+      return {
+        label,
+        on,
+        pick: () => this.setState({ color: c }),
+        style: 'width:74px;height:74px;flex:none;border-radius:50%;padding:0;background:' + c + ';border:4px solid #1B2B4B;box-shadow:' + (on ? '0 0 0 4px #fff,0 0 0 8px #1B2B4B' : '0 4px 0 #1B2B4B') + ';'
+      };
+    });
+    const strokes = s.live
+      ? s.strokes.concat([{ d: this.toD(s.live.pts), color: s.live.color }])
+      : s.strokes;
+    return {
+      musicOn: this.state.music !== false,
+      musicOnList: this.state.music !== false ? [{}] : [],
+      musicOffList: this.state.music !== false ? [] : [{}],
+      toggleMusic: () => this.setState({ music: this.state.music === false }),
+      musicStyle: 'position:absolute;left:30px;top:24px;width:72px;height:72px;border-radius:50%;border:4px solid #1B2B4B;box-shadow:0 4px 0 #1B2B4B;padding:0;display:flex;align-items:center;justify-content:center;z-index:5;' + (this.state.music !== false ? 'background:#6C4DF6;color:#fff;' : 'background:#E4EEF8;color:#1B2B4B;'),
+      swatches,
+      strokes,
+      undo: () => this.setState({ strokes: this.state.strokes.slice(0, -1) }),
+      down: (e) => {
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {}
+        this.setState({ live: { pts: [this.point(e)], color: this.state.color } });
+      },
+      move: (e) => {
+        const live = this.state.live;
+        if (!live) return;
+        this.setState({ live: { pts: live.pts.concat([this.point(e)]), color: live.color } });
+      },
+      up: () => {
+        const live = this.state.live;
+        if (!live) return;
+        this.setState({
+          strokes: this.state.strokes.concat([{ d: this.toD(live.pts), color: live.color }]),
+          live: null
+        });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

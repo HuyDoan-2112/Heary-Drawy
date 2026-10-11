@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meet your buddy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+button:focus-visible,a:focus-visible{outline:4px solid #6C4DF6;outline-offset:4px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@keyframes live{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.35);opacity:0}}
+@keyframes popin{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes introOut{0%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.05);visibility:hidden}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}.intro{display:none}}
+</style>
+</helmet>
+<div style="width: 820px; height: 1180px; box-sizing: border-box; position: relative; overflow: hidden; background: #D9F0FF; font-family: 'Fredoka', system-ui, sans-serif; color: #1B2B4B">
+  <svg width="820" height="300" viewBox="0 0 820 300" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; left: 0; bottom: 0">
+    <path d="M0 150 Q200 60 420 125 T820 100 V300 H0 Z" fill="#C6EED8"/>
+    <path d="M0 215 Q260 140 520 200 T820 175 V300 H0 Z" fill="#A6E0C0"/>
+  </svg>
+  <svg width="170" height="70" viewBox="0 0 170 70" aria-hidden="true" style="position: absolute; left: 430px; top: 34px"><path d="M30 60 a24 24 0 0 1 8 -44 a30 30 0 0 1 56 -6 a26 26 0 0 1 44 24 a18 18 0 0 1 2 26 Z" fill="#fff" opacity=".85"/></svg>
+  <svg width="130" height="54" viewBox="0 0 170 70" aria-hidden="true" style="position: absolute; left: 150px; top: 40px"><path d="M30 60 a24 24 0 0 1 8 -44 a30 30 0 0 1 56 -6 a26 26 0 0 1 44 24 a18 18 0 0 1 2 26 Z" fill="#fff" opacity=".7"/></svg>
+  <button type="button" onClick="{{ toggleMusic }}" aria-label="Music on or off" aria-pressed="{{ musicOn }}" style="{{ musicStyle }}">
+    <sc-for list="{{ musicOnList }}" as="mo" hint-placeholder-count="1"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></sc-for>
+    <sc-for list="{{ musicOffList }}" as="mf" hint-placeholder-count="0"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg></sc-for>
+  </button>
+  <h1 style="position: absolute; left: 60px; right: 60px; top: 170px; margin: 0; text-align: center; font-size: 72px; font-weight: 700; line-height: 1.1">You and Kiwi are a team!</h1>
+  <div style="position: absolute; left: 0; right: 0; top: 392px; display: flex; justify-content: center; animation: bob 2.6s ease-in-out infinite"><svg width="200" height="112" viewBox="0 0 170 96" aria-hidden="true" fill="none" stroke-linecap="round"><path d="M14 88A71 71 0 0 1 156 88" stroke="#FF6F59" stroke-width="12"/><path d="M30 88A55 55 0 0 1 140 88" stroke="#FFC83D" stroke-width="12"/><path d="M46 88A39 39 0 0 1 124 88" stroke="#2EC4A0" stroke-width="12"/><path d="M62 88A23 23 0 0 1 108 88" stroke="#6C4DF6" stroke-width="12"/></svg></div>
+  <div style="position: absolute; right: 6px; top: 820px; animation: bob 1.8s ease-in-out infinite"><svg width="236" height="236" viewBox="0 0 200 200" role="img" aria-label="Drawy" style="flex: none; overflow: visible"><g transform="rotate(0 100 120)"><path d="M86 54 C72 40 72 20 84 10 C92 26 96 40 94 54 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M96 52 C92 32 98 14 112 6 C114 24 110 40 104 52 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M106 56 C114 40 128 32 142 36 C134 48 122 56 110 58 Z" fill="#6C4DF6" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="84" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="116" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M46 112 C22 98 14 72 22 52 C38 66 50 88 54 108 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M154 112 C178 98 186 72 178 52 C162 66 150 88 146 108 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="100" cy="120" rx="62" ry="66" fill="#FF6F59" stroke="#1B2B4B" stroke-width="5"/><ellipse cx="100" cy="144" rx="36" ry="34" fill="#FFE3A3"/><ellipse cx="66" cy="124" rx="9" ry="6" fill="#FF9FB3"/><ellipse cx="134" cy="124" rx="9" ry="6" fill="#FF9FB3"/><path d="M68 102 q12 -16 24 0M108 102 q12 -16 24 0" fill="none" stroke="#1B2B4B" stroke-width="5" stroke-linecap="round"/><path d="M89 120 Q100 148 113 122 Z" fill="#E5483D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M88 110 Q100 100 114 110 Q115 120 104 125 L89 118 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M22 30 L25.0 37.0 L32 40 L25.0 43.0 L22 50 L19.0 43.0 L12 40 L19.0 37.0 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="2.5" stroke-linejoin="round"/><path d="M180 26 L182.4 31.6 L188 34 L182.4 36.4 L180 42 L177.6 36.4 L172 34 L177.6 31.6 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="2.5" stroke-linejoin="round"/><path d="M192 78 L193.8 82.2 L198 84 L193.8 85.8 L192 90 L190.2 85.8 L186 84 L190.2 82.2 Z" fill="#6C4DF6" stroke="#1B2B4B" stroke-width="2.5" stroke-linejoin="round"/><path d="M10 82 L11.8 86.2 L16 88 L11.8 89.8 L10 94 L8.2 89.8 L4 88 L8.2 86.2 Z" fill="#FF6F59" stroke="#1B2B4B" stroke-width="2.5" stroke-linejoin="round"/></g></svg></div>
+  <div style="position: absolute; left: 0; right: 0; top: 510px; display: flex; justify-content: center; gap: 120px">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px"><svg width="220" height="220" viewBox="0 0 72 72" role="img" aria-label="Mango, you" style="flex: none; overflow: visible"><path d="M17 44 C13 24 29 10 45 12 C60 14 65 31 60 47 C55 61 39 68 27 62 C20 58 18 52 17 44 Z" fill="#FFC23D" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><path d="M46 17 C55 20 60 29 59 39 C52 34 47 26 46 17 Z" fill="#FF8A3D" opacity=".55"/><path d="M40 13 C40 9 41 6 43 4" fill="none" stroke="#6B4423" stroke-width="3" stroke-linecap="round"/><path d="M42 7 c4 -8 14 -9 20 -4 c-6 7 -14 8 -20 4 z" fill="#35B26B" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><circle cx="30" cy="37" r="3.8" fill="#1B2B4B"/><circle cx="31.2" cy="35.8" r="1.2" fill="#fff"/><circle cx="46" cy="37" r="3.8" fill="#1B2B4B"/><circle cx="47.2" cy="35.8" r="1.2" fill="#fff"/><path d="M32.0 46 q6 6 12 0" fill="none" stroke="#1B2B4B" stroke-width="3" stroke-linecap="round"/><circle cx="23" cy="44" r="3.6" fill="#FF8FA8" opacity=".85"/><circle cx="53" cy="44" r="3.6" fill="#FF8FA8" opacity=".85"/></svg><div style="padding: 6px 28px; border-radius: 30px; border: 4px solid #1B2B4B; background: #fff; font-size: 36px; font-weight: 600">Mango</div></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px"><svg width="220" height="220" viewBox="0 0 72 72" role="img" aria-label="Kiwi" style="flex: none; overflow: visible"><circle cx="36" cy="38" r="31" fill="#A47148" stroke="#1B2B4B" stroke-width="3.5" stroke-linejoin="round"/><circle cx="36" cy="38" r="25" fill="#8BD34A"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(0 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(36 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(72 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(108 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(144 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(180 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(216 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(252 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(288 36 38)"/><ellipse cx="36" cy="19" rx="1.7" ry="3.2" fill="#1B2B4B" transform="rotate(324 36 38)"/><circle cx="36" cy="38" r="12" fill="#D9F2A6"/><circle cx="30" cy="36" r="3.8" fill="#1B2B4B"/><circle cx="31.2" cy="34.8" r="1.2" fill="#fff"/><circle cx="42" cy="36" r="3.8" fill="#1B2B4B"/><circle cx="43.2" cy="34.8" r="1.2" fill="#fff"/><path d="M30.0 43 q6 6 12 0" fill="none" stroke="#1B2B4B" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="44" r="3" fill="#FF8FA8" opacity=".85"/><circle cx="48" cy="44" r="3" fill="#FF8FA8" opacity=".85"/></svg><div style="padding: 6px 28px; border-radius: 30px; border: 4px solid #1B2B4B; background: #fff; font-size: 36px; font-weight: 600">Kiwi</div></div>
+  </div>
+  <a href="P1-Speaker-iPad.dc.html" style="position: absolute; left: 30px; top: 1046px; width: 760px; height: 112px; box-sizing: border-box; border-radius: 56px; border: 6px solid #1B2B4B; background: #2EC4A0; color: #1B2B4B; box-shadow: 0 8px 0 #1B2B4B; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 52px; font-weight: 700; padding: 0">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    Let's play!
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { music: true };
+  }
+
+  renderVals() {
+    return {
+      musicOn: this.state.music !== false,
+      musicOnList: this.state.music !== false ? [{}] : [],
+      musicOffList: this.state.music !== false ? [] : [{}],
+      toggleMusic: () => this.setState({ music: this.state.music === false }),
+      musicStyle: 'position:absolute;left:30px;top:24px;width:76px;height:76px;border-radius:50%;border:4px solid #1B2B4B;box-shadow:0 4px 0 #1B2B4B;padding:0;display:flex;align-items:center;justify-content:center;z-index:5;' + (this.state.music !== false ? 'background:#6C4DF6;color:#fff;' : 'background:#E4EEF8;color:#1B2B4B;'),
+    };
+  }
+}
+</script>
+</body>
+</html>

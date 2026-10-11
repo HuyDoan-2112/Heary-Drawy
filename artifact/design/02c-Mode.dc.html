@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pick a game</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+button:focus-visible,a:focus-visible{outline:4px solid #6C4DF6;outline-offset:4px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@keyframes live{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.35);opacity:0}}
+@keyframes popin{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes introOut{0%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.05);visibility:hidden}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}.intro{display:none}}
+</style>
+</helmet>
+<div style="width: 820px; height: 1180px; box-sizing: border-box; position: relative; overflow: hidden; background: #D9F0FF; font-family: 'Fredoka', system-ui, sans-serif; color: #1B2B4B">
+  <svg width="820" height="300" viewBox="0 0 820 300" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; left: 0; bottom: 0">
+    <path d="M0 150 Q200 60 420 125 T820 100 V300 H0 Z" fill="#C6EED8"/>
+    <path d="M0 215 Q260 140 520 200 T820 175 V300 H0 Z" fill="#A6E0C0"/>
+  </svg>
+  <svg width="170" height="70" viewBox="0 0 170 70" aria-hidden="true" style="position: absolute; left: 430px; top: 34px"><path d="M30 60 a24 24 0 0 1 8 -44 a30 30 0 0 1 56 -6 a26 26 0 0 1 44 24 a18 18 0 0 1 2 26 Z" fill="#fff" opacity=".85"/></svg>
+  <svg width="130" height="54" viewBox="0 0 170 70" aria-hidden="true" style="position: absolute; left: 150px; top: 40px"><path d="M30 60 a24 24 0 0 1 8 -44 a30 30 0 0 1 56 -6 a26 26 0 0 1 44 24 a18 18 0 0 1 2 26 Z" fill="#fff" opacity=".7"/></svg>
+  <button type="button" onClick="{{ toggleMusic }}" aria-label="Music on or off" aria-pressed="{{ musicOn }}" style="{{ musicStyle }}">
+    <sc-for list="{{ musicOnList }}" as="mo" hint-placeholder-count="1"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></sc-for>
+    <sc-for list="{{ musicOffList }}" as="mf" hint-placeholder-count="0"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg></sc-for>
+  </button>
+  <h1 style="position: absolute; left: 0; right: 0; top: 140px; margin: 0; text-align: center; font-size: 72px; font-weight: 700; line-height: 1">Pick a game!</h1>
+  <button type="button" onClick="{{ pickN }}" aria-pressed="{{ onN }}" aria-label="Normal" style="{{ stN }}">
+    <span style="{{ badgeN }}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1B2B4B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>
+    <svg width="190" height="190" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="104" r="92" fill="#E8FBF3"/><path d="M100 56C78 38 36 48 32 98c-4 52 32 90 54 86 8-2 10-5 14-5s6 3 14 5c22 4 58-34 54-86-4-50-46-60-68-42z" fill="#E5483D" stroke="#1B2B4B" stroke-width="6" stroke-linejoin="round"/><path d="M100 56c0-14 4-26 12-36" fill="none" stroke="#8B5A2B" stroke-width="7" stroke-linecap="round"/><path d="M112 34c10-14 30-16 42-8-6 14-26 22-42 8z" fill="#35B26B" stroke="#1B2B4B" stroke-width="5" stroke-linejoin="round"/></svg>
+    <span style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 56px; font-weight: 700; line-height: 1">Normal</span>
+      <span style="display: flex; gap: 6px"><svg width="44" height="44" viewBox="0 0 24 24" fill="#FFC83D" stroke="#1B2B4B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg><svg width="44" height="44" viewBox="0 0 24 24" fill="#fff" stroke="#1B2B4B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg><svg width="44" height="44" viewBox="0 0 24 24" fill="#fff" stroke="#1B2B4B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg></span>
+    </span>
+  </button>
+  <button type="button" onClick="{{ pickA }}" aria-pressed="{{ onA }}" aria-label="Advanced" style="{{ stA }}">
+    <span style="{{ badgeA }}"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#1B2B4B" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>
+    <svg width="190" height="190" viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="104" r="92" fill="#FFF3C4"/><circle cx="152" cy="52" r="18" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4"/><path d="M152 22v-8M152 90v-8M122 52h-8M190 52h-8M131 31l-6-6M179 79l-6-6M173 31l6-6" stroke="#1B2B4B" stroke-width="4" stroke-linecap="round"/><rect x="60" y="96" width="78" height="66" fill="#7CC8FF" stroke="#1B2B4B" stroke-width="5" stroke-linejoin="round"/><path d="M50 100 L99 58 L148 100 Z" fill="#FF6F59" stroke="#1B2B4B" stroke-width="5" stroke-linejoin="round"/><rect x="118" y="62" width="12" height="22" fill="#FF6F59" stroke="#1B2B4B" stroke-width="4"/><rect x="90" y="124" width="20" height="38" rx="3" fill="#8B5A2B" stroke="#1B2B4B" stroke-width="4"/><rect x="68" y="108" width="16" height="16" fill="#fff" stroke="#1B2B4B" stroke-width="4"/><rect x="116" y="108" width="16" height="16" fill="#fff" stroke="#1B2B4B" stroke-width="4"/><rect x="30" y="128" width="9" height="34" fill="#8B5A2B" stroke="#1B2B4B" stroke-width="4"/><circle cx="34" cy="116" r="20" fill="#35B26B" stroke="#1B2B4B" stroke-width="4"/><path d="M18 162 H182" stroke="#1B2B4B" stroke-width="5" stroke-linecap="round"/></svg>
+    <span style="display: flex; flex-direction: column; gap: 14px">
+      <span style="font-size: 56px; font-weight: 700; line-height: 1">Advanced</span>
+      <span style="display: flex; gap: 6px"><svg width="44" height="44" viewBox="0 0 24 24" fill="#FFC83D" stroke="#1B2B4B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg><svg width="44" height="44" viewBox="0 0 24 24" fill="#FFC83D" stroke="#1B2B4B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg><svg width="44" height="44" viewBox="0 0 24 24" fill="#FFC83D" stroke="#1B2B4B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"/></svg></span>
+    </span>
+  </button>
+  <div style="position: absolute; right: -40px; top: 470px; z-index: 4; animation: bob 2.4s ease-in-out infinite"><svg width="230" height="230" viewBox="0 0 200 200" role="img" aria-label="Drawy" style="flex: none; overflow: visible"><g transform="translate(200 0) scale(-1 1)"><g transform="rotate(-5 100 120)"><path d="M86 54 C72 40 72 20 84 10 C92 26 96 40 94 54 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M96 52 C92 32 98 14 112 6 C114 24 110 40 104 52 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M106 56 C114 40 128 32 142 36 C134 48 122 56 110 58 Z" fill="#6C4DF6" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="84" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="116" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M42 112 C26 132 32 162 56 170 C58 148 54 128 42 112 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="100" cy="120" rx="62" ry="66" fill="#FF6F59" stroke="#1B2B4B" stroke-width="5"/><ellipse cx="100" cy="144" rx="36" ry="34" fill="#FFE3A3"/><ellipse cx="66" cy="124" rx="9" ry="6" fill="#FF9FB3"/><ellipse cx="134" cy="124" rx="9" ry="6" fill="#FF9FB3"/><circle cx="80" cy="98" r="15" fill="#fff" stroke="#1B2B4B" stroke-width="4"/><circle cx="84" cy="100" r="7" fill="#1B2B4B"/><circle cx="87" cy="96" r="2.5" fill="#fff"/><circle cx="120" cy="98" r="15" fill="#fff" stroke="#1B2B4B" stroke-width="4"/><circle cx="124" cy="100" r="7" fill="#1B2B4B"/><circle cx="127" cy="96" r="2.5" fill="#fff"/><path d="M66 74 q12 -8 26 -2" fill="none" stroke="#1B2B4B" stroke-width="4.5" stroke-linecap="round"/><path d="M108 72 q14 -6 26 2" fill="none" stroke="#1B2B4B" stroke-width="4.5" stroke-linecap="round"/><path d="M89 120 Q100 148 113 122 Z" fill="#E5483D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M88 110 Q100 100 114 110 Q115 120 104 125 L89 118 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M152 110 C172 98 194 90 208 92 C208 104 188 118 156 132 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M184 58 L186.4 63.6 L192 66 L186.4 68.4 L184 74 L181.6 68.4 L176 66 L181.6 63.6 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="2.5" stroke-linejoin="round"/></g></g></svg></div>
+  <a href="02-Team.dc.html" style="position: absolute; left: 30px; top: 1046px; width: 760px; height: 112px; box-sizing: border-box; border-radius: 56px; border: 6px solid #1B2B4B; background: #2EC4A0; color: #1B2B4B; box-shadow: 0 8px 0 #1B2B4B; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 52px; font-weight: 700; padding: 0">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    Go!
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { music: true, mode: 'normal' };
+  }
+
+  renderVals() {
+    return {
+      musicOn: this.state.music !== false,
+      musicOnList: this.state.music !== false ? [{}] : [],
+      musicOffList: this.state.music !== false ? [] : [{}],
+      toggleMusic: () => this.setState({ music: this.state.music === false }),
+      musicStyle: 'position:absolute;left:30px;top:24px;width:76px;height:76px;border-radius:50%;border:4px solid #1B2B4B;box-shadow:0 4px 0 #1B2B4B;padding:0;display:flex;align-items:center;justify-content:center;z-index:5;' + (this.state.music !== false ? 'background:#6C4DF6;color:#fff;' : 'background:#E4EEF8;color:#1B2B4B;'),
+      ...(() => {
+        const out = {};
+        [['N', 'normal', 270], ['A', 'advanced', 620]].forEach(([k, m, top]) => {
+          const on = (this.state.mode || 'normal') === m;
+          out['on' + k] = on;
+          out['pick' + k] = () => this.setState({ mode: m });
+          out['st' + k] = 'position:absolute;left:30px;top:' + top + 'px;width:760px;height:300px;box-sizing:border-box;border-radius:44px;padding:0 0 0 36px;display:flex;align-items:center;gap:34px;font-family:inherit;color:#1B2B4B;text-align:left;' +
+            'border:' + (on ? '7px' : '5px') + ' solid #1B2B4B;background:' + (on ? '#FFF3C4' : '#fff') + ';box-shadow:' + (on ? '0 0 0 8px #FFC83D' : '0 9px 0 #1B2B4B') + ';';
+          out['badge' + k] = 'position:absolute;left:-18px;top:-18px;width:62px;height:62px;border-radius:50%;border:4px solid #1B2B4B;background:#2EC4A0;align-items:center;justify-content:center;display:' + (on ? 'flex' : 'none') + ';';
+        });
+        return out;
+      })(),
+    };
+  }
+}
+</script>
+</body>
+</html>

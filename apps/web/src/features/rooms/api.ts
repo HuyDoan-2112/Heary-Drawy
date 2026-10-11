@@ -1,34 +1,12 @@
-import type { JoinRoomRequest, JoinRoomResponse, PendingRoomSnapshot, RoleFilteredSnapshot } from '../../generated/contracts';
-
 const SESSION_KEY = 'heary_guest_session';
 
-type GuestSession = Pick<JoinRoomResponse, 'room_id' | 'player_id' | 'guest_session_token' | 'expires_at'>;
-
-export async function joinRoom(request: JoinRoomRequest): Promise<{ session?: GuestSession; error?: string }> {
-  try {
-    const response = await fetch('/api/v1/rooms/join', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(request),
-    });
-    if (!response.ok) {
-      const body: { error?: { code?: string } } = await response.json();
-      return { error: body.error?.code === 'nickname_taken'
-        ? 'That name is already taken here. Try another one!'
-        : 'That room is not ready. Check the shapes with a grown-up.' };
-    }
-    const joined: JoinRoomResponse = await response.json();
-    const session: GuestSession = {
-      room_id: joined.room_id,
-      player_id: joined.player_id,
-      guest_session_token: joined.guest_session_token,
-      expires_at: joined.expires_at,
-    };
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    return { session };
-  } catch {
-    return { error: 'Cannot reach the room right now. Ask a grown-up to try again.' };
-  }
+// A separate, authorized admission flow is still a product decision. This client only resumes
+// guest sessions already present on this device; it never discovers or joins a Room.
+export interface GuestSession {
+  room_id: string;
+  player_id: string;
+  guest_session_token: string;
+  expires_at: string;
 }
 
 export function readGuestSession(): GuestSession | null {
@@ -49,14 +27,6 @@ export function readGuestSession(): GuestSession | null {
   }
 }
 
-export async function getRoomState(session: GuestSession): Promise<PendingRoomSnapshot | RoleFilteredSnapshot | null> {
-  try {
-    const response = await fetch(`/api/v1/rooms/${encodeURIComponent(session.room_id)}/state`, {
-      headers: { Authorization: `Bearer ${session.guest_session_token}` },
-    });
-    if (!response.ok) return null;
-    return await response.json();
-  } catch {
-    return null;
-  }
+export function clearGuestSession(): void {
+  window.sessionStorage.removeItem(SESSION_KEY);
 }

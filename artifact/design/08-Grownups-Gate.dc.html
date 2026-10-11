@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grown-up check</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+button:focus-visible,a:focus-visible{outline:4px solid #6C4DF6;outline-offset:4px}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #D9F0FF; font-family: 'Fredoka', system-ui, sans-serif; color: #1B2B4B">
+  <svg width="390" height="240" viewBox="0 0 390 240" preserveAspectRatio="none" aria-hidden="true" style="position:absolute;left:0;bottom:0">
+    <path d="M0 95 Q110 40 220 92 T390 78 V240 H0 Z" fill="#C6EED8"/>
+    <path d="M0 155 Q130 105 250 150 T390 132 V240 H0 Z" fill="#A6E0C0"/>
+  </svg>
+  <a href="Main.dc.html" aria-label="Back to the game" style="position:absolute;left:16px;top:18px;width:56px;height:56px;border-radius:50%;border:4px solid #1B2B4B;background:#fff;box-shadow:0 4px 0 #1B2B4B;display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#1B2B4B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+  <div style="position:absolute;left:0;right:0;top:96px;text-align:center">
+    <div style="width:150px;height:150px;margin:0 auto 28px;border-radius:50%;border:6px solid #1B2B4B;background:#fff;box-shadow:0 8px 0 #1B2B4B;display:flex;align-items:center;justify-content:center;color:#6C4DF6"><svg width="84" height="84" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+    <h1 style="margin:0 auto;font-size:50px;font-weight:700;line-height:1.05;max-width:330px">Grown-ups only</h1>
+    <p style="margin:20px auto 0;max-width:320px;font-family:'Nunito',system-ui,sans-serif;font-size:20px;font-weight:700;line-height:1.35;color:#4A5A78">This area has parent feedback and settings. Ask a grown-up to continue.</p>
+  </div>
+  <div style="position:absolute;left:24px;right:24px;top:478px;border-radius:28px;border:4px solid #1B2B4B;background:#fff;box-shadow:0 7px 0 #1B2B4B;padding:22px 20px;font-family:'Nunito',system-ui,sans-serif">
+    <div style="font-size:20px;font-weight:800;margin-bottom:12px">Grown-up check</div>
+    <div style="font-size:17px;font-weight:700;color:#4A5A78;line-height:1.35">Press and hold the button for 3 seconds. Children should not open this part on their own.</div>
+  </div>
+  <a href="08-Grownups.dc.html" aria-label="I am a grown-up. Open parent area" style="position:absolute;left:24px;right:24px;bottom:42px;height:96px;box-sizing:border-box;border-radius:48px;border:6px solid #1B2B4B;background:#2EC4A0;color:#1B2B4B;box-shadow:0 8px 0 #1B2B4B;display:flex;align-items:center;justify-content:center;gap:12px;font-size:32px;font-weight:700">
+    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+    Hold to open
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

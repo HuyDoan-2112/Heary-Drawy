@@ -81,24 +81,6 @@ class ObjectAccess(BaseModel):
     model_url: str | None = None
 
 
-class JoinRoomRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    shape_code: list[str] = Field(min_length=3, max_length=3)
-    nickname: str = Field(min_length=1, max_length=32)
-    avatar_id: str
-
-
-class JoinRoomResponse(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    room_id: str
-    player_id: str
-    guest_session_token: str
-    expires_at: str
-    admission_status: Literal["admitted"]
-
-
 class IntroSeenRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -113,6 +95,27 @@ class IntroSeenResponse(BaseModel):
     round_id: str
     phase: Literal["role_intro", "collaborating"]
     phase_version: int
+
+
+class PlayAgainRequest(IntroSeenRequest):
+    """Same command identity and version guard as the intro acknowledgement."""
+
+
+class PlayAgainResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    round_id: str
+    status: Literal["waiting_for_teammate", "started"]
+    next_round_id: str | None = None
+
+
+class ReadyState(BaseModel):
+    """Who has acknowledged the current phase: role intro, or Play again while exploring."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    self_ready: bool
+    teammate_ready: bool
 
 
 class Point(BaseModel):
@@ -191,6 +194,7 @@ class RoleFilteredSnapshot(BaseModel):
     voice: VoiceState = Field(default_factory=VoiceState)
     object_access: ObjectAccess | None = None
     feedback: FeedbackSnapshot | None = None
+    ready: ReadyState | None = None
 
     @model_validator(mode="after")
     def enforce_role_phase_visibility(self) -> "RoleFilteredSnapshot":
@@ -234,10 +238,10 @@ class ErrorEnvelope(BaseModel):
 class ContractBundle(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    join_room_request: JoinRoomRequest
-    join_room_response: JoinRoomResponse
     intro_seen_request: IntroSeenRequest
     intro_seen_response: IntroSeenResponse
+    play_again_request: PlayAgainRequest
+    play_again_response: PlayAgainResponse
     pending_room_snapshot: PendingRoomSnapshot
     role_filtered_snapshot: RoleFilteredSnapshot
     drawing_snapshot: DrawingSnapshot

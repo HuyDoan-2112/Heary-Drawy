@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Turn on the mic</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+button:focus-visible,a:focus-visible{outline:4px solid #6C4DF6;outline-offset:4px}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes wave{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+@keyframes live{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes ring{0%{transform:scale(1);opacity:.5}100%{transform:scale(1.35);opacity:0}}
+@keyframes popin{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+@keyframes introOut{0%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.05);visibility:hidden}}
+@media (prefers-reduced-motion: reduce){*{animation:none !important}.intro{display:none}}
+</style>
+</helmet>
+<div style="width: 820px; height: 1180px; box-sizing: border-box; position: relative; overflow: hidden; background: #D9F0FF; font-family: 'Fredoka', system-ui, sans-serif; color: #1B2B4B">
+  <svg width="820" height="300" viewBox="0 0 820 300" preserveAspectRatio="none" aria-hidden="true" style="position: absolute; left: 0; bottom: 0">
+    <path d="M0 150 Q200 60 420 125 T820 100 V300 H0 Z" fill="#C6EED8"/>
+    <path d="M0 215 Q260 140 520 200 T820 175 V300 H0 Z" fill="#A6E0C0"/>
+  </svg>
+  <svg width="170" height="70" viewBox="0 0 170 70" aria-hidden="true" style="position: absolute; left: 430px; top: 34px"><path d="M30 60 a24 24 0 0 1 8 -44 a30 30 0 0 1 56 -6 a26 26 0 0 1 44 24 a18 18 0 0 1 2 26 Z" fill="#fff" opacity=".85"/></svg>
+  <svg width="130" height="54" viewBox="0 0 170 70" aria-hidden="true" style="position: absolute; left: 150px; top: 40px"><path d="M30 60 a24 24 0 0 1 8 -44 a30 30 0 0 1 56 -6 a26 26 0 0 1 44 24 a18 18 0 0 1 2 26 Z" fill="#fff" opacity=".7"/></svg>
+  <button type="button" onClick="{{ toggleMusic }}" aria-label="Music on or off" aria-pressed="{{ musicOn }}" style="{{ musicStyle }}">
+    <sc-for list="{{ musicOnList }}" as="mo" hint-placeholder-count="1"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></sc-for>
+    <sc-for list="{{ musicOffList }}" as="mf" hint-placeholder-count="0"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/><path d="M3 3l18 18"/></svg></sc-for>
+  </button>
+  <div style="position: absolute; left: 440px; top: 250px; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center">
+    <div style="position: absolute; inset: 0; border-radius: 50%; background: #FF6F59; animation: ring 2s ease-out infinite"></div>
+    <div style="position: relative; width: 290px; height: 290px; box-sizing: border-box; border-radius: 50%; border: 7px solid #1B2B4B; background: #FF6F59; color: #1B2B4B; box-shadow: 0 12px 0 #1B2B4B; display: flex; align-items: center; justify-content: center"><svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg></div>
+  </div>
+  <div style="position: absolute; left: -24px; top: 290px; animation: bob 2.6s ease-in-out infinite"><svg width="340" height="340" viewBox="0 0 200 200" role="img" aria-label="Drawy" style="flex: none; overflow: visible"><g transform="rotate(12 100 120)"><path d="M86 54 C72 40 72 20 84 10 C92 26 96 40 94 54 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M96 52 C92 32 98 14 112 6 C114 24 110 40 104 52 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M106 56 C114 40 128 32 142 36 C134 48 122 56 110 58 Z" fill="#6C4DF6" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="84" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="116" cy="186" rx="11" ry="6" fill="#FF9F43" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M42 112 C26 132 32 162 56 170 C58 148 54 128 42 112 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><ellipse cx="100" cy="120" rx="62" ry="66" fill="#FF6F59" stroke="#1B2B4B" stroke-width="5"/><ellipse cx="100" cy="144" rx="36" ry="34" fill="#FFE3A3"/><ellipse cx="66" cy="124" rx="9" ry="6" fill="#FF9FB3"/><ellipse cx="134" cy="124" rx="9" ry="6" fill="#FF9FB3"/><circle cx="80" cy="98" r="14" fill="#fff" stroke="#1B2B4B" stroke-width="4"/><circle cx="87" cy="101" r="7" fill="#1B2B4B"/><circle cx="90" cy="97" r="2.5" fill="#fff"/><circle cx="120" cy="98" r="16" fill="#fff" stroke="#1B2B4B" stroke-width="4"/><circle cx="127" cy="101" r="7" fill="#1B2B4B"/><circle cx="130" cy="97" r="2.5" fill="#fff"/><path d="M64 70 q14 -12 28 -2" fill="none" stroke="#1B2B4B" stroke-width="4.5" stroke-linecap="round"/><path d="M108 70 q14 -12 28 -2" fill="none" stroke="#1B2B4B" stroke-width="4.5" stroke-linecap="round"/><ellipse cx="101" cy="131" rx="5.5" ry="6.5" fill="#E5483D" stroke="#1B2B4B" stroke-width="3.5"/><path d="M91 112 Q100 104 110 112 Q111 120 101 123 Q99 118 91 115 Z" fill="#FFC83D" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M150 126 C172 118 186 96 178 68 C170 70 162 78 158 90 C150 94 146 104 148 114 Z" fill="#2EC4A0" stroke="#1B2B4B" stroke-width="4" stroke-linejoin="round"/><path d="M196 80 q-10 9 0 20M206 70 q-17 19 0 40" fill="none" stroke="#1B2B4B" stroke-width="4.5" stroke-linecap="round"/></g></svg></div>
+  <h1 style="position: absolute; left: 0; right: 0; top: 620px; margin: 0; text-align: center; font-size: 68px; font-weight: 700; line-height: 1.05">Can we hear you?</h1>
+  <p style="position: absolute; left: 110px; right: 110px; top: 730px; margin: 0; text-align: center; font-family: 'Nunito', system-ui, sans-serif; font-size: 24px; font-weight: 600; color: #4A5A78; line-height: 1.35">Grown-up: tap <b>Allow</b> when the phone asks. Your child's voice goes live to their teammate. It is turned into text for Drawy's feedback and is not saved as audio.</p>
+  <a href="02c-Mode.dc.html" style="position: absolute; left: 30px; top: 1046px; width: 760px; height: 112px; box-sizing: border-box; border-radius: 56px; border: 6px solid #1B2B4B; background: #2EC4A0; color: #1B2B4B; box-shadow: 0 8px 0 #1B2B4B; display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 50px; font-weight: 700; padding: 0">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+    Turn on mic
+  </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":820,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(...args) {
+    super(...args);
+    this.state = { music: true };
+  }
+
+  renderVals() {
+    return {
+      musicOn: this.state.music !== false,
+      musicOnList: this.state.music !== false ? [{}] : [],
+      musicOffList: this.state.music !== false ? [] : [{}],
+      toggleMusic: () => this.setState({ music: this.state.music === false }),
+      musicStyle: 'position:absolute;left:30px;top:24px;width:76px;height:76px;border-radius:50%;border:4px solid #1B2B4B;box-shadow:0 4px 0 #1B2B4B;padding:0;display:flex;align-items:center;justify-content:center;z-index:5;' + (this.state.music !== false ? 'background:#6C4DF6;color:#fff;' : 'background:#E4EEF8;color:#1B2B4B;'),
+    };
+  }
+}
+</script>
+</body>
+</html>

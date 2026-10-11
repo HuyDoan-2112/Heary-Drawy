@@ -4,7 +4,11 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from services.api.app.contracts.schemas import ErrorEnvelope, RoleFilteredSnapshot, SocketEnvelope
+from services.api.app.contracts.schemas import (
+    ErrorEnvelope,
+    RoleFilteredSnapshot,
+    SocketEnvelope,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = ROOT / "contracts" / "fixtures"

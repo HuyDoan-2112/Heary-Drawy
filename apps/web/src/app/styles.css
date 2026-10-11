@@ -213,6 +213,24 @@ p {
   align-items: center;
 }
 
+.join-screen .action-row {
+  grid-column: 1 / -1;
+}
+
+.join-screen[data-session='true'] {
+  grid-template-columns: 1fr;
+  min-height: 0;
+}
+
+.join-screen[data-session='true'] .screen-copy {
+  width: min(100%, 540px);
+  justify-self: center;
+}
+
+.join-screen .action-row a {
+  padding-inline: 16px;
+}
+
 .name-field {
   display: grid;
   gap: 8px;
@@ -233,41 +251,18 @@ p {
   font-weight: 900;
 }
 
-.room-join-form {
+.room-panel {
   display: grid;
   gap: 10px;
   padding: 14px;
   border: 3px solid var(--ink);
   border-radius: 22px;
-  background: white;
+  background: #fff8ea;
 }
 
-.shape-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.shape-fields label {
-  display: grid;
-  gap: 4px;
-  flex: 1 1 90px;
-  font-size: 0.9rem;
+.room-panel p {
+  margin: 0;
   font-weight: 800;
-}
-
-.shape-fields select {
-  min-height: var(--touch-phone);
-  width: 100%;
-  padding: 0 8px;
-  border: 3px solid var(--ink);
-  border-radius: 14px;
-  background: white;
-  color: var(--ink);
-}
-
-.room-join-form .primary-button {
-  cursor: pointer;
 }
 
 .join-message {
@@ -832,7 +827,6 @@ p {
 
 @media (min-width: 768px) {
   .flow-nav a,
-  .shape-fields select,
   .name-field input,
   .primary-button,
   .secondary-button,

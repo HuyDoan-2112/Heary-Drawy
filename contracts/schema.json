@@ -151,72 +151,6 @@
       "title": "IntroSeenResponse",
       "type": "object"
     },
-    "JoinRoomRequest": {
-      "additionalProperties": false,
-      "properties": {
-        "avatar_id": {
-          "title": "Avatar Id",
-          "type": "string"
-        },
-        "nickname": {
-          "maxLength": 32,
-          "minLength": 1,
-          "title": "Nickname",
-          "type": "string"
-        },
-        "shape_code": {
-          "items": {
-            "type": "string"
-          },
-          "maxItems": 3,
-          "minItems": 3,
-          "title": "Shape Code",
-          "type": "array"
-        }
-      },
-      "required": [
-        "shape_code",
-        "nickname",
-        "avatar_id"
-      ],
-      "title": "JoinRoomRequest",
-      "type": "object"
-    },
-    "JoinRoomResponse": {
-      "additionalProperties": false,
-      "properties": {
-        "admission_status": {
-          "const": "admitted",
-          "title": "Admission Status",
-          "type": "string"
-        },
-        "expires_at": {
-          "title": "Expires At",
-          "type": "string"
-        },
-        "guest_session_token": {
-          "title": "Guest Session Token",
-          "type": "string"
-        },
-        "player_id": {
-          "title": "Player Id",
-          "type": "string"
-        },
-        "room_id": {
-          "title": "Room Id",
-          "type": "string"
-        }
-      },
-      "required": [
-        "room_id",
-        "player_id",
-        "guest_session_token",
-        "expires_at",
-        "admission_status"
-      ],
-      "title": "JoinRoomResponse",
-      "type": "object"
-    },
     "ObjectAccess": {
       "additionalProperties": false,
       "properties": {
@@ -295,6 +229,69 @@
       "title": "PendingRoomSummary",
       "type": "object"
     },
+    "PlayAgainRequest": {
+      "additionalProperties": false,
+      "description": "Same command identity and version guard as the intro acknowledgement.",
+      "properties": {
+        "command_id": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Command Id",
+          "type": "string"
+        },
+        "expected_round_version": {
+          "minimum": 0,
+          "title": "Expected Round Version",
+          "type": "integer"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command_id",
+        "round_id",
+        "expected_round_version"
+      ],
+      "title": "PlayAgainRequest",
+      "type": "object"
+    },
+    "PlayAgainResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "next_round_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Next Round Id"
+        },
+        "round_id": {
+          "title": "Round Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "waiting_for_teammate",
+            "started"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "round_id",
+        "status"
+      ],
+      "title": "PlayAgainResponse",
+      "type": "object"
+    },
     "PlayerSummary": {
       "additionalProperties": false,
       "properties": {
@@ -360,6 +357,26 @@
       "title": "Point",
       "type": "object"
     },
+    "ReadyState": {
+      "additionalProperties": false,
+      "description": "Who has acknowledged the current phase: role intro, or Play again while exploring.",
+      "properties": {
+        "self_ready": {
+          "title": "Self Ready",
+          "type": "boolean"
+        },
+        "teammate_ready": {
+          "title": "Teammate Ready",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "self_ready",
+        "teammate_ready"
+      ],
+      "title": "ReadyState",
+      "type": "object"
+    },
     "ResultStatus": {
       "enum": [
         "scored",
@@ -420,6 +437,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/ObjectAccess"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ready": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReadyState"
             },
             {
               "type": "null"
@@ -716,14 +744,14 @@
     "intro_seen_response": {
       "$ref": "#/$defs/IntroSeenResponse"
     },
-    "join_room_request": {
-      "$ref": "#/$defs/JoinRoomRequest"
-    },
-    "join_room_response": {
-      "$ref": "#/$defs/JoinRoomResponse"
-    },
     "pending_room_snapshot": {
       "$ref": "#/$defs/PendingRoomSnapshot"
+    },
+    "play_again_request": {
+      "$ref": "#/$defs/PlayAgainRequest"
+    },
+    "play_again_response": {
+      "$ref": "#/$defs/PlayAgainResponse"
     },
     "role_filtered_snapshot": {
       "$ref": "#/$defs/RoleFilteredSnapshot"
@@ -733,10 +761,10 @@
     }
   },
   "required": [
-    "join_room_request",
-    "join_room_response",
     "intro_seen_request",
     "intro_seen_response",
+    "play_again_request",
+    "play_again_response",
     "pending_room_snapshot",
     "role_filtered_snapshot",
     "drawing_snapshot",

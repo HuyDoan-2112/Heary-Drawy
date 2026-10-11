@@ -1,6 +1,6 @@
 # HTTP and WebSocket contract draft
 
-Status: proposed v1 integration contract with Feature 01 schemas/fixtures and a partial Feature 02 local backend prototype. Later changes require coordinating the contract owner. `GET /health`, local `POST /api/v1/rooms/join`, `GET /api/v1/rooms/{room_id}/state`, `POST /api/v1/rounds/{round_id}/intro-seen`, and socket authenticate/state.request/round.intro.seen are implemented against SQLite. The rest of this document remains unimplemented. The default app has no provisioned Room; fixture Room creation is test-only.
+Status: proposed v1 integration contract with Feature 01 schemas/fixtures and a local Postgres-backed Feature 02 slice. `GET /health`, authenticated guest state, intro-seen and Play again HTTP endpoints, and socket authenticate/state.request/round.intro.seen/round.play_again with live single-process state push are implemented. There is no child-facing Room join endpoint. Other endpoints below remain drafts. The default API provisions no Room; a server-side operator CLI is available for controlled demos. Later changes require coordinating the contract owner.
 
 Related: [product](product.md), [lifecycle](round-lifecycle.md), [data model](data-model.md), [architecture](architecture.md).
 
@@ -20,9 +20,9 @@ Related: [product](product.md), [lifecycle](round-lifecycle.md), [data model](da
 | --- | --- | --- |
 | `GET /health` | Deployment/test | Minimal liveness; no secrets/config dump |
 | `POST /rooms` | Host only | Create controlled private Room; disabled until host authorization is chosen |
-| `POST /rooms/join` | Joining device | Resolve shape code, validate nickname/avatar, create guest session under admission policy |
 | `GET /rooms/{room_id}/state` | Admitted guest | Pending or role-filtered current state; no host projection yet |
 | `POST /rounds/{round_id}/intro-seen` | Current Pair participant | Idempotent role-intro acknowledgement with `command_id`, `round_id`, `expected_round_version`; both participants must acknowledge before collaboration |
+| `POST /rounds/{round_id}/play-again` | Current Pair participant | Provisional idempotent both-ready acknowledgement during `exploring`; when both agree, finish the old Round and create a new role-swapped Round |
 | `POST /pairs/{pair_id}/media-session` | Current Pair member | Issue subscribe-only microphone-capable room session, not an always-open publishing grant |
 | `GET /rounds/{round_id}/object-access` | Authorized role/phase | Private reference/GLB access; denied to Drawer before Reveal |
 | `POST /rounds/{round_id}/drawing-submission` | Current Drawer | Freeze acknowledged revision and create/validate its bounded PNG; idempotent |
@@ -32,19 +32,9 @@ Media-session issuance must use a provider grant that initially disallows public
 
 Controlled demo Rooms may be provisioned server-side before a host UI exists. Do not expose unauthenticated host routes as a shortcut.
 
-### Join example
+### Admission and matching boundary
 
-```json
-{
-  "shape_code": ["circle", "triangle", "square"],
-  "nickname": "BlueFox",
-  "avatar_id": "mango"
-}
-```
-
-On success, `201` returns `room_id`, `player_id`, `guest_session_token`, `expires_at`, and `admission_status`. Shape vocabulary and avatar catalog are allowlisted fixtures/catalogs, not arbitrary paths. Room admission determines whether the new guest can see a Pair; possessing a shape code is not host authorization.
-
-Concurrent normalized-name conflicts return `409` with code `nickname_taken` and friendly text. A reconnect uses the existing token; joining with the same name without it cannot resume the other player's session.
+The server-private `GameStore.admit_guest(room_id, nickname, avatar_id)` transaction validates an already-authorized guest, enforces normalized nickname uniqueness within that Room, issues a scoped bearer session, and matches the next two waiting guests *within the same Room* into a persisted Pair. No public API, shape code, or invite link provisions a guest. How an authorized adult admits devices and delivers their sessions is an **unresolved product contract**; internal test fixtures exercising this seam do not establish a usable child-facing flow. A reconnect uses the existing session token; a nickname cannot take over a session. Never pair guests across Rooms or in a global public queue.
 
 ### Submission example
 
@@ -101,7 +91,7 @@ Server responses carry `protocol_version`, `type`, an event identity, and `paylo
 | `voice.hold.end` | Owner of hold; same `hold_id`/epoch; idempotent even before a grant arrives |
 | `drawing.op` | Current Drawer only; expected drawing revision, bounded stroke start/append/end or undo/clear operation |
 | `round.explore` | Participant acknowledging feedback presentation |
-| `round.play_again` | Participant's Play again intent; both-ready acknowledgement with phase version guard |
+| `round.play_again` | Participant's Play again intent; `command_id`, `round_id`, `expected_round_version`, both-ready acknowledgement with phase version guard; disconnect timeout unresolved |
 | `session.heartbeat` | Authenticated connection; authority/connection health, never automatic mic renewal |
 
 A microphone hold does not need exclusive access to a global round version or speaking floor. Track each participant's active hold separately. Phase/epoch checks invalidate old-round requests; end/cancel must work when a grant acknowledgement is delayed.
@@ -125,7 +115,7 @@ No child-facing transcript stream or free-text chat is required. AI status/evide
 
 ## Role-filtered snapshots
 
-Common fields: membership, teammate avatars/nicknames, role, permitted phase/version, connection status, relevant drawing revision, and feature availability. Construct each role projection explicitly.
+Common fields: membership, teammate avatars/nicknames, role, permitted phase/version, connection status, relevant drawing revision, and feature availability. Construct each role projection explicitly. In `role_intro` and `exploring`, `ready: {self_ready, teammate_ready}` reports both participants' acknowledgements; it is omitted in other phases. Teammate connection status reflects locally connected sockets, not a durable database record. Live state/presence push currently requires a single API process; multiple replicas need a shared fanout solution before deployment.
 
 - Speaker in role intro/collaboration may receive the current object's authorized access plus read-only drawing state.
 - Before pairing, return a typed `PendingRoomSnapshot` with only the participant and waiting status. In role intro, the Drawer has no edit or voice permission. In collaboration, the Drawer may edit; **no object identity, rubric, label, URL, or asset bytes** are sent before Reveal. Omit secret fields entirely; do not send them and hide them with CSS.

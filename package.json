@@ -8,8 +8,10 @@
   ],
   "scripts": {
     "dev:web": "npm --workspace @heary-drawy/web run dev",
-    "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.main:app --reload --host 127.0.0.1 --port 8000",
-    "dev:api:fixture": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.local_demo:app --reload --host 127.0.0.1 --port 8000",
+    "dev:api": "PYTHONPATH=. uv run --project services/api uvicorn services.api.app.main:create_app --factory --reload --host 127.0.0.1 --port 8000",
+    "dev:api:local": "PYTHONPATH=. uv run --project services/api --extra dev python services/api/scripts/run_local.py",
+    "db:migrate": "PYTHONPATH=. uv run --project services/api python services/api/scripts/migrate.py",
+    "db:provision-room": "PYTHONPATH=. uv run --project services/api python services/api/scripts/provision_room.py",
     "build:web": "npm --workspace @heary-drawy/web run build",
     "lint:web": "npm --workspace @heary-drawy/web run lint",
     "test:web": "npm --workspace @heary-drawy/web run test",
@@ -18,7 +20,8 @@
     "generate:types": "json2ts -i contracts/schema.json -o apps/web/src/generated/contracts.ts --bannerComment \"/* Generated from contracts/schema.json. Do not edit by hand. */\"",
     "check:contracts": "PYTHONPATH=. uv run --project services/api python services/api/scripts/export_contract_schema.py --check && node scripts/check-generated-contracts.mjs",
     "test:api": "PYTHONPATH=. uv run --project services/api --extra dev pytest services/api/tests",
-    "test": "npm run check:contracts && npm run typecheck:web && npm run lint:web && npm run test:web && npm run test:api"
+    "lint:api": "uv run --project services/api --extra dev ruff check services/api/app services/api/scripts services/api/tests",
+    "test": "npm run check:contracts && npm run typecheck:web && npm run lint:web && npm run lint:api && npm run test:web && npm run test:api"
   },
   "devDependencies": {
     "json-schema-to-typescript": "15.0.4"

@@ -1,0 +1,164 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-10T16:50:00Z"
+  },
+  "title": "Voice-to-Draw: giao diện cho bé",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "00-Drawy.dc.html": {
+      "x": 3600,
+      "y": 0,
+      "w": 820,
+      "h": 1000,
+      "title": "Linh vật Drawy (chim vẹt lory)",
+      "is_interactive": true
+    },
+    "Main.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 820,
+      "h": 1180,
+      "title": "1 · Chọn nhân vật + tự đặt tên",
+      "is_interactive": true
+    },
+    "02b-Mic.dc.html": {
+      "x": 900,
+      "y": 0,
+      "w": 820,
+      "h": 1180,
+      "title": "2 · Bật micro (người lớn bấm Allow)",
+      "is_interactive": true
+    },
+    "02c-Mode.dc.html": {
+      "x": 1800,
+      "y": 0,
+      "w": 820,
+      "h": 1180,
+      "title": "3 · Chọn chế độ: Normal hoặc Advanced",
+      "is_interactive": true
+    },
+    "02-Team.dc.html": {
+      "x": 2700,
+      "y": 0,
+      "w": 820,
+      "h": 1180,
+      "title": "4 · Gặp bạn cùng đội",
+      "is_interactive": true
+    },
+    "P1-Speaker-iPad.dc.html": {
+      "x": 0,
+      "y": 1560,
+      "w": 820,
+      "h": 1180,
+      "title": "5a · Bé tả (iPad): báo vai rồi chơi luôn",
+      "is_interactive": true
+    },
+    "P2-Drawer-iPad.dc.html": {
+      "x": 900,
+      "y": 1560,
+      "w": 820,
+      "h": 1180,
+      "title": "5b · Bé vẽ (iPad)",
+      "is_interactive": true
+    },
+    "06b-Checking.dc.html": {
+      "x": 1800,
+      "y": 1560,
+      "w": 820,
+      "h": 1180,
+      "title": "6 · Drawy đang chấm",
+      "is_interactive": true
+    },
+    "07-Result.dc.html": {
+      "x": 2700,
+      "y": 1560,
+      "w": 820,
+      "h": 1180,
+      "title": "7 · Kết quả: 3 sao + 2 câu",
+      "is_interactive": true
+    },
+    "P3-Speaker-iPhone.dc.html": {
+      "x": 0,
+      "y": 3120,
+      "w": 390,
+      "h": 844,
+      "title": "5a · Bé tả (iPhone)",
+      "is_interactive": true
+    },
+    "P4-Drawer-iPhone.dc.html": {
+      "x": 470,
+      "y": 3120,
+      "w": 390,
+      "h": 844,
+      "title": "5b · Bé vẽ (iPhone)",
+      "is_interactive": true
+    },
+    "08-Grownups-Gate.dc.html": {
+      "x": 1800,
+      "y": 3120,
+      "w": 390,
+      "h": 844,
+      "title": "Cổng phụ huynh",
+      "is_interactive": true
+    },
+    "08-Grownups.dc.html": {
+      "x": 2270,
+      "y": 3120,
+      "w": 390,
+      "h": 844,
+      "title": "Phụ huynh (điện thoại)",
+      "is_interactive": true
+    }
+  },
+  "order": [
+    "00-Drawy.dc.html",
+    "Main.dc.html",
+    "02b-Mic.dc.html",
+    "02c-Mode.dc.html",
+    "02-Team.dc.html",
+    "P1-Speaker-iPad.dc.html",
+    "P2-Drawer-iPad.dc.html",
+    "06b-Checking.dc.html",
+    "07-Result.dc.html",
+    "P3-Speaker-iPhone.dc.html",
+    "P4-Drawer-iPhone.dc.html",
+    "08-Grownups-Gate.dc.html",
+    "08-Grownups.dc.html"
+  ],
+  "notes": {
+    "t1": {
+      "x": 0,
+      "y": -300,
+      "text": "Bước 1: chọn nhân vật, bật micro, chọn chế độ, gặp bạn",
+      "kind": "title1",
+      "maxW": 3520
+    },
+    "t2": {
+      "x": 0,
+      "y": 1260,
+      "text": "Bước 2: một vòng chơi trên iPad, chấm và kết quả",
+      "kind": "title1",
+      "maxW": 3520
+    },
+    "t4": {
+      "x": 0,
+      "y": 2820,
+      "text": "Vòng chơi trên iPhone",
+      "kind": "title1",
+      "maxW": 860
+    },
+    "t3": {
+      "x": 1800,
+      "y": 2820,
+      "text": "Dành cho phụ huynh",
+      "kind": "title1",
+      "maxW": 1320
+    }
+  },
+  "designSystems": []
+}

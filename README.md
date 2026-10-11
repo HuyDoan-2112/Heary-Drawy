@@ -2,7 +2,7 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: Feature 01 foundation is implemented. Fixture UI screens, a local Feature 02 SQLite authority prototype, and a minimal real join/check-teammate adapter exist; real gameplay is not integrated. No deployable room service, drawing relay, voice, object delivery, AI feedback, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
+**Current state: Feature 01 foundation and a local Feature 02 Postgres-backed guest-room slice are implemented. Already-admitted guests can be matched within a server-private Room, see live presence, acknowledge role intro, and receive server-pushed state. There is no child-facing Room join flow. Other screens are fixture previews; real gameplay is not integrated. No hosted deployment, drawing relay, voice, object delivery, AI feedback, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
 
 ## Start here
 
@@ -47,7 +47,7 @@ Prerequisites used for Feature 01:
 - Node.js `v24.21.0`
 - npm `11.19.0`
 - uv `0.13.0` for Python dependency management
-- Python `3.13.16`, provisioned by uv from `services/api/pyproject.toml`
+- Python `3.12` for the local `pgserver` dev fixture, selected by `services/api/.python-version` (the API also supports Python 3.13 with an external Postgres instance)
 
 Install JavaScript dependencies:
 
@@ -67,14 +67,9 @@ Run the web fixture shell:
 npm run dev:web
 ```
 
-Open `http://localhost:5173/join` to start the fixture flow. For local-only adult/synthetic Room join checks, run `npm run dev:api:fixture` in another terminal (on port 8000) and use the `circle`, `triangle`, `square` code on the join screen. The default API creates no Room; the remaining screens still show fixtures. Do not expose the fixture server to a network or use it with children. Implemented fixture routes are `/join`, `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, `/play/drawer`, `/checking`, `/result`, and `/grownups`.
+For **local, adult/synthetic-only** API checks, run `npm run dev:api:local` in another terminal. This starts a local Postgres server and applies SQL migrations. It does **not** admit guests or provide a child-facing join method. `http://localhost:5173/join` remains a character-selection fixture unless a guest session has already been securely provisioned; the admission/bootstrap contract is still unresolved. Do not expose the local server to a network or use it with children. Other fixture routes remain `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, `/play/drawer`, `/checking`, `/result`, and `/grownups`.
 
-Run the API shell:
-
-```bash
-npm run dev:api
-# then open http://127.0.0.1:8000/health
-```
+For an existing Postgres instance, set `DATABASE_URL` in your shell, run `npm run db:migrate` for local/test databases (or use Supabase CLI for deployed migrations), run `npm run db:provision-room -- --ttl-hours 24` to create a server-private Room, then `npm run dev:api`. That operator command does **not** admit children or generate a Room join code/link. The default API provisions no Room. Set `ALLOWED_ORIGINS` to the comma-separated exact web origins before accepting WebSockets from other origins. Host HTTP/UI controls remain disabled pending a separate authorization decision.
 
 Run checks:
 
@@ -82,6 +77,7 @@ Run checks:
 npm run check:contracts
 npm run typecheck:web
 npm run lint:web
+npm run lint:api
 npm run test:web
 npm run test:api
 npm run test

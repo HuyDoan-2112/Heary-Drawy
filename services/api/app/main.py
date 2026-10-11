@@ -1,22 +1,26 @@
 import asyncio
 import json
-from pathlib import Path
-from tempfile import gettempdir
+import os
+from collections.abc import Callable
 from typing import Annotated, Any
 from uuid import uuid4
 
+import anyio
 from fastapi import Depends, FastAPI, Header, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
+from starlette.concurrency import run_in_threadpool
 
-from services.api.app.contracts.schemas import IntroSeenRequest, IntroSeenResponse, JoinRoomRequest, JoinRoomResponse
-from services.api.app.game.store import GameError, GameStore
+from services.api.app.contracts.schemas import (
+    IntroSeenRequest,
+    IntroSeenResponse,
+    PlayAgainRequest,
+    PlayAgainResponse,
+)
+from services.api.app.game.store import CommandOutcome, GameError, GameStore
+from services.api.app.realtime import Connection, ConnectionHub
 
-DEFAULT_DB_PATH = Path(gettempdir()) / "heary-drawy-api.sqlite3"
-
-
-class DisabledHostRoomRequest(BaseModel):
-    shape_code: list[str] | None = None
+DEFAULT_ALLOWED_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
 
 
 def bearer_token(authorization: Annotated[str | None, Header()] = None) -> str:
@@ -44,9 +48,22 @@ def receive_message(text: str) -> dict[str, Any]:
     return message
 
 
-def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = False) -> FastAPI:
+def allowed_origins_from_env() -> tuple[str, ...]:
+    configured = os.environ.get("ALLOWED_ORIGINS", "")
+    origins = tuple(origin.strip() for origin in configured.split(",") if origin.strip())
+    return origins or DEFAULT_ALLOWED_ORIGINS
+
+
+def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, ...] | None = None) -> FastAPI:
+    """Build the API. The database must already be migrated (see supabase/migrations)."""
+    url = database_url or os.environ.get("DATABASE_URL")
+    if not url:
+        raise RuntimeError("DATABASE_URL is required")
+    origins = frozenset(allowed_origins if allowed_origins is not None else allowed_origins_from_env())
+
     app = FastAPI(title="Heary Drawy API", version="0.1.0")
-    store = GameStore(db_path, fixture_room=fixture_room)
+    store = GameStore(url)
+    hub = ConnectionHub(store)
     app.state.game_store = store
 
     @app.exception_handler(GameError)
@@ -58,7 +75,7 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = Fa
         return {"status": "ok"}
 
     @app.post("/api/v1/rooms")
-    def create_room_disabled(_request: DisabledHostRoomRequest | None = None) -> JSONResponse:
+    def create_room_disabled() -> JSONResponse:
         return error_response(
             GameError(
                 "host_authorization_unavailable",
@@ -67,32 +84,76 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = Fa
             )
         )
 
-    @app.post("/api/v1/rooms/join", response_model=JoinRoomResponse, status_code=201)
-    def join_room(request: JoinRoomRequest) -> JoinRoomResponse:
-        result = store.join_room(request.shape_code, request.nickname, request.avatar_id)
-        return JoinRoomResponse(**result.__dict__)
-
     @app.get("/api/v1/rooms/{room_id}/state")
-    def room_state(room_id: str, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
-        snapshot = store.get_snapshot(token, room_id)
+    async def room_state(room_id: str, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
+        snapshot = await run_in_threadpool(store.get_snapshot, token, room_id, hub.connected_player_ids())
         return snapshot.model_dump(mode="json", exclude_none=True)
 
-    @app.post("/api/v1/rounds/{round_id}/intro-seen", response_model=IntroSeenResponse)
-    def intro_seen(round_id: str, request: IntroSeenRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
-        if request.round_id != round_id:
+    async def run_round_command(
+        method: Callable[[str, str, str, int], CommandOutcome], token: str, round_id: str, command: IntroSeenRequest
+    ) -> dict[str, Any]:
+        if command.round_id != round_id:
             raise GameError("stale_round", "The round has changed. Refresh to continue.", 409)
-        return store.acknowledge_intro(token, round_id, request.command_id, request.expected_round_version)
+        outcome = await run_in_threadpool(method, token, round_id, command.command_id, command.expected_round_version)
+        await hub.push_snapshots(outcome.notify_player_ids)
+        return outcome.response
+
+    @app.post("/api/v1/rounds/{round_id}/intro-seen", response_model=IntroSeenResponse)
+    async def intro_seen(round_id: str, request: IntroSeenRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
+        return await run_round_command(store.acknowledge_intro, token, round_id, request)
+
+    @app.post("/api/v1/rounds/{round_id}/play-again", response_model=PlayAgainResponse)
+    async def play_again(round_id: str, request: PlayAgainRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
+        return await run_round_command(store.play_again, token, round_id, request)
+
+    socket_commands: dict[str, tuple[type[IntroSeenRequest], Callable[[str, str, str, int], CommandOutcome]]] = {
+        "round.intro.seen": (IntroSeenRequest, store.acknowledge_intro),
+        "round.play_again": (PlayAgainRequest, store.play_again),
+    }
+
+    async def handle_socket_message(connection: Connection, incoming: dict[str, Any]) -> None:
+        if incoming.get("protocol_version") != 1:
+            raise GameError("payload_invalid", "Unsupported socket message.", 422)
+        message_type = incoming.get("type")
+        if message_type == "state.request":
+            await hub.send_snapshot(connection)
+            return
+        if message_type not in socket_commands:
+            raise GameError("payload_invalid", "This command is not available yet.", 422)
+        request_model, method = socket_commands[message_type]
+        raw_payload = incoming.get("payload")
+        if not isinstance(raw_payload, dict):
+            raise GameError("payload_invalid", "That message could not be read.", 422)
+        try:
+            command = request_model.model_validate(
+                {**raw_payload, "command_id": incoming.get("command_id"), "round_id": incoming.get("round_id")}
+            )
+        except ValidationError as exc:
+            raise GameError("payload_invalid", "That message could not be read.", 422) from exc
+        outcome = await run_in_threadpool(
+            method, connection.token, command.round_id, command.command_id, command.expected_round_version
+        )
+        await connection.send(
+            {
+                "protocol_version": 1,
+                "type": "command.ack",
+                "command_id": command.command_id,
+                "event_id": f"event_{uuid4().hex}",
+                "payload": outcome.response,
+            }
+        )
+        await hub.push_snapshots(outcome.notify_player_ids)
 
     @app.websocket("/api/v1/rooms/{room_id}/socket")
     async def room_socket(websocket: WebSocket, room_id: str) -> None:
-        origin = websocket.headers.get("origin")
-        if origin not in {"http://localhost:5173", "http://127.0.0.1:5173", "http://testserver"}:
+        if websocket.headers.get("origin") not in origins:
             await websocket.close(code=1008)
             return
         await websocket.accept()
+        connection: Connection | None = None
         try:
             message = receive_message(await asyncio.wait_for(websocket.receive_text(), timeout=5))
-            if not isinstance(message, dict) or message.get("protocol_version") != 1 or message.get("type") != "session.authenticate":
+            if message.get("protocol_version") != 1 or message.get("type") != "session.authenticate":
                 await websocket.send_json(
                     {
                         "protocol_version": 1,
@@ -106,70 +167,46 @@ def create_app(db_path: str | Path = DEFAULT_DB_PATH, *, fixture_room: bool = Fa
             token = auth_payload.get("guest_session_token") if isinstance(auth_payload, dict) else None
             if not isinstance(token, str):
                 raise GameError("session_invalid", "Join again to continue.", 401)
-            snapshot = store.get_snapshot(token, room_id)
-            payload = snapshot.model_dump(mode="json", exclude_none=True)
-            await websocket.send_json(
+            _session, player = await run_in_threadpool(store.authenticate, token, room_id)
+            connection = Connection(websocket, token, room_id, player["player_id"])
+            hub.register(connection)
+            await connection.send(
                 {
                     "protocol_version": 1,
                     "type": "session.authenticated",
                     "event_id": f"event_{uuid4().hex}",
-                    "payload": {"connection_epoch": uuid4().hex, "player_id": payload["session_player_id"]},
+                    "payload": {"connection_epoch": uuid4().hex, "player_id": connection.player_id},
                 }
             )
-            await websocket.send_json(
-                {
-                    "protocol_version": 1,
-                    "type": "state.snapshot",
-                    "event_id": payload.get("snapshot_id", f"event_{uuid4().hex}"),
-                    "round_id": payload.get("round", {}).get("round_id"),
-                    "payload": payload,
-                }
-            )
+            # Everyone in the pair learns this player is connected; a waiting player just gets state.
+            members = await run_in_threadpool(store.pair_member_ids, connection.player_id)
+            await hub.push_snapshots(members or (connection.player_id,))
             while True:
                 incoming = receive_message(await websocket.receive_text())
                 try:
-                    if incoming.get("protocol_version") != 1:
-                        raise GameError("payload_invalid", "Unsupported socket message.", 422)
-                    if incoming.get("type") == "round.intro.seen":
-                        raw_payload = incoming.get("payload")
-                        if not isinstance(raw_payload, dict):
-                            raise GameError("payload_invalid", "Invalid intro acknowledgement.", 422)
-                        try:
-                            command = IntroSeenRequest.model_validate({
-                                **raw_payload, "command_id": incoming.get("command_id"),
-                                "round_id": incoming.get("round_id"),
-                            })
-                        except ValidationError as exc:
-                            raise GameError("payload_invalid", "Invalid intro acknowledgement.", 422) from exc
-                        outcome = store.acknowledge_intro(token, command.round_id, command.command_id, command.expected_round_version)
-                        await websocket.send_json({"protocol_version": 1, "type": "command.ack", "command_id": command.command_id,
-                                                   "event_id": f"event_{uuid4().hex}", "payload": outcome})
-                    elif incoming.get("type") != "state.request":
-                        raise GameError("payload_invalid", "This command is not available yet.", 422)
-                    snapshot = store.get_snapshot(token, room_id)
-                    payload = snapshot.model_dump(mode="json", exclude_none=True)
-                    await websocket.send_json(
-                        {"protocol_version": 1, "type": "state.snapshot", "event_id": payload.get("snapshot_id", f"event_{uuid4().hex}"),
-                         "round_id": payload.get("round", {}).get("round_id"), "payload": payload}
-                    )
+                    await handle_socket_message(connection, incoming)
                 except GameError as error:
-                    await websocket.send_json({"protocol_version": 1, "type": "command.error",
-                                               "command_id": incoming.get("command_id"), "payload": store.error_payload(error)})
+                    await connection.send(
+                        {
+                            "protocol_version": 1,
+                            "type": "command.error",
+                            "command_id": incoming.get("command_id"),
+                            "payload": store.error_payload(error),
+                        }
+                    )
         except GameError as error:
-            await websocket.send_json(
-                {
-                    "protocol_version": 1,
-                    "type": "command.error",
-                    "payload": store.error_payload(error),
-                }
-            )
+            await websocket.send_json({"protocol_version": 1, "type": "command.error", "payload": store.error_payload(error)})
             await websocket.close(code=1008)
         except WebSocketDisconnect:
-            return
+            pass
         except TimeoutError:
             await websocket.close(code=1008)
+        finally:
+            if connection is not None:
+                hub.unregister(connection)
+                # Shielded so the teammate still learns about the disconnect when this task is cancelled.
+                with anyio.CancelScope(shield=True):
+                    members = await run_in_threadpool(store.pair_member_ids, connection.player_id)
+                    await hub.push_snapshots(m for m in members if m != connection.player_id)
 
     return app
-
-
-app = create_app()
