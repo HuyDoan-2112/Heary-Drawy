@@ -43,7 +43,7 @@ from services.api.app.contracts.schemas import (
     VoiceState,
 )
 from services.api.app.db import connect
-from services.api.app.game.objects import BY_ID, CATALOG
+from services.api.app.game.objects import BY_ID, CATALOG, SecretObject
 
 ALLOWED_AVATARS = {"sky", "mint", "grape", "berry", "pepper", "lemon", "mango", "plum", "coco", "kiwi"}
 
@@ -688,6 +688,7 @@ class GameStore:
                 object_id=item.object_id,
                 display_name=item.display_name,
                 image_url=f"/api/v1/rounds/{round_row['round_id']}/picture",
+                model_url=f"/api/v1/rounds/{round_row['round_id']}/model",
             )
         if phase in REVEALED_PHASES:
             result = round_row["result"]
@@ -705,8 +706,8 @@ class GameStore:
             )
         return fields
 
-    def picture_svg(self, token: str, round_id: str) -> str:
-        """The round's secret picture, only for its Speaker or after the reveal."""
+    def secret_object(self, token: str, round_id: str) -> SecretObject:
+        """The round's secret object (picture and 3D model), only for its Speaker or after the reveal."""
         _session, player = self.authenticate(token)
         with self._tx() as db:
             row = db.execute(
@@ -719,7 +720,7 @@ class GameStore:
         is_speaker = row["speaker_player_id"] == player["player_id"]
         if not is_speaker and RoundPhase(row["phase"]) not in REVEALED_PHASES:
             raise GameError("not_authorized", "That picture is not available.", 403)
-        return BY_ID[row["object_id"]].svg
+        return BY_ID[row["object_id"]]
 
     # ---------------------------------------------------------------- drawing
 

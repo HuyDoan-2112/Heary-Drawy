@@ -4,8 +4,9 @@ import { CheckingScreen, ResultScreen } from '../../app/screens/Finish';
 import { MicScreen, ModeScreen, TeamScreen } from '../../app/screens/JoinFlow';
 import { DrawerPlayView, SpeakerPlayView } from '../../app/screens/Play';
 import { ArrowIcon, HomeIcon } from '../../app/ui/icons';
+import { SecretModel } from '../../app/ui/model';
 import type { RoleFilteredSnapshot } from '../../generated/contracts';
-import { fetchPicture, leaveRoom, uploadClip, type GuestSession } from '../rooms/api';
+import { fetchSecretFile, leaveRoom, uploadClip, type GuestSession } from '../rooms/api';
 import { useRoomConnection, type RoomSnapshot } from '../rooms/useRoomConnection';
 import { hasMicrophone, requestMicrophone, useVoice } from '../voice/voice';
 import { toScreenStroke, toServerStroke } from './strokes';
@@ -27,14 +28,14 @@ function teamStatus(snapshot: RoomSnapshot | null, connection: string): string {
   return `Round ${snapshot.round.round_index} of ${snapshot.round.total_rounds}. You ${snapshot.round.role === 'speaker' ? 'talk' : 'draw'}!${away}`;
 }
 
-/** Loads the authorized secret picture for this round, if the snapshot grants one. */
-function usePicture(session: GuestSession, url: string | undefined) {
+/** Loads an authorized secret file (picture or 3D model) for this round, if the snapshot grants one. */
+function useSecretFile(session: GuestSession, url: string | null | undefined) {
   const [picture, setPicture] = useState<{ url: string; src: string } | null>(null);
   useEffect(() => {
     if (!url) return undefined;
     let cancelled = false;
     let objectUrl: string | null = null;
-    fetchPicture(session, url)
+    fetchSecretFile(session, url)
       .then((src) => {
         objectUrl = src;
         if (cancelled) URL.revokeObjectURL(src);
@@ -72,7 +73,11 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
       if (round) void uploadClip(session, round.round.round_id, clip);
     },
   });
-  const pictureSrc = usePicture(session, round?.object_access?.image_url);
+  const access = round?.object_access;
+  const pictureSrc = useSecretFile(session, access?.image_url);
+  // Only the Speaker spins the model, and only while describing it.
+  const speakerDescribing = round?.round.role === 'speaker' && round.round.phase === 'collaborating';
+  const modelSrc = useSecretFile(session, speakerDescribing ? access?.model_url : null);
 
   useEffect(() => {
     if (connection === 'ended') onExit();
@@ -90,7 +95,8 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
 
   const self = snapshot?.room.participant;
   const mate = teammate ? { name: teammate.nickname, avatarId: teammate.avatar_id } : null;
-  const picture = pictureSrc ? <img className="secret-picture" src={pictureSrc} alt={round?.object_access?.display_name ?? 'Picture'} /> : null;
+  const label = access?.display_name ?? 'Picture';
+  const picture = pictureSrc ? <img className="secret-picture" src={pictureSrc} alt={label} /> : null;
   const strokes = round ? (round.drawing.strokes ?? []).map(toScreenStroke) : [];
   const talk = { holding: voice.holding, start: voice.startTalking, stop: voice.stopTalking };
   const status = (
@@ -135,7 +141,7 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
       <SpeakerPlayView
         selfAvatarId={self!.avatar_id}
         teammate={mate}
-        picture={picture}
+        picture={<SecretModel modelSrc={modelSrc} pictureSrc={pictureSrc} label={label} />}
         strokes={strokes}
         teammateTalking={voice.teammateTalking}
         talk={talk}
