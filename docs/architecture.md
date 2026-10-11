@@ -1,6 +1,6 @@
 # Architecture
 
-Status: proposed technical baseline for the agreed [product](product.md), not implemented or device-validated.
+Status: long-term technical baseline, mostly deferred. **The demo uses a smaller subset:** React/Vite web app, one FastAPI process with local Postgres, one WebSocket for game state and strokes, peer-to-peer WebRTC voice on one Wi-Fi network, 2D secret pictures, local Whisper transcription of uploaded hold clips, and one DeepSeek feedback call per round. LiveKit, OpenAI, 3D GLB assets, Supabase Storage, and hosting below are not used for the demo. See [implementation-plan.md](implementation-plan.md).
 
 ## Selected baseline
 

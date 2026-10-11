@@ -1,40 +1,25 @@
-# 06 - Attributed streaming transcription
+# 06 - Transcription
 
-Status: **not started**  
-Dependencies: [05](05-live-voice.md); eligible adult-demo AI access  
-References: [architecture](../architecture.md), [API](../api.md), [data model](../data-model.md), [privacy](../privacy-and-safety.md)
+Status: **planned for the demo (step D2); not started**
+Dependencies: [05](05-live-voice.md)
 
-## Deliverable
+## Demo version
 
-Authorized hold audio becomes final/incomplete text attributed to the correct participant, role, Round, and hold, without changing or delaying partner audio.
+Speech becomes text so the AI can judge what the Speaker said in [07](07-feedback.md). No live streaming and no external speech service: audio never leaves the laptop.
 
-## Scope and ownership
+- **Capture:** while a player holds the talk button, the browser also records the same mic stream with `MediaRecorder` (iOS Safari produces `audio/mp4`). On release it uploads the clip with the round ID to a new endpoint, e.g. `POST /api/v1/rounds/{round_id}/clips`. Partner audio still goes peer-to-peer and is never delayed by this.
+- **Authorize:** only a player in that round, only during collaboration; clips over ~60 s or ~2 MB are rejected.
+- **Transcribe:** the API runs open-source Whisper locally (`faster-whisper`, an English model such as `small.en`, loaded once at startup) in a background thread. It decodes the clip itself, so no system ffmpeg is needed.
+- **Store:** one row per clip - round, player, role, start time, text, and status (`pending`, `done`, `failed`). Delete the audio as soon as it is transcribed; keep only the text.
+- Both players can hold at once; each clip is attributed to its own player, so overlap is fine.
 
-Own backend transcription module and the media-subscriber adapter/tests; coordinate media lifecycle/startup changes with 05.
+## Demo checks
 
-- Subscribe in the Python RTC runtime to the same authorized tracks; separate streams/sessions by participant, not mixed pair audio.
-- Produce documented 24 kHz mono PCM with bounded queues, per-hold authorization windows, and tested tail draining.
-- Use `gpt-live-transcribe`, English hints, manual hold boundaries/commit, and documented `turn_detection: null`. Recheck exact provider contract and model access first.
-- Track provider item ID with participant/role/Round/hold/epoch; final events may arrive out of order.
-- Bound finalization and retries. Missing tails/events/restart buffers yield incomplete evidence, not invented success.
-- Apply approved ephemeral-buffer/transcript retention and secret-safe logging.
+- [ ] A held phrase on the iPad and on the iPhone each produces correct text attributed to the right player and role.
+- [ ] Partner audio is unaffected while clips upload and transcribe.
+- [ ] A failed or empty clip is marked `failed` and does not block the round.
+- [ ] No audio files remain on disk after transcription.
 
-## Out of scope
+## Later (deferred)
 
-Another browser microphone recorder, permanent audio/replay, showing live transcripts to children, mid-round AI coaching, feature scoring, or actual-child use before eligibility gates.
-
-## Acceptance
-
-- [ ] Actual permitted audio produces final text without blocking partner playback.
-- [ ] Both concurrent speakers stay separately attributed, including after role swaps.
-- [ ] Late/out-of-order provider events map correctly and cannot attach to a new Round/hold.
-- [ ] Final words are preserved under the tested release/tail policy.
-- [ ] Overflow, missing final events, provider disconnect, and backend restart yield bounded incomplete states.
-- [ ] Hidden answer/checklist is not seeded into STT hints.
-- [ ] No raw audio/transcript/credentials leak into logs or unauthorized projections.
-
-## Handoff
-
-Provide immutable final/incomplete transcript records to 07, with timing/model metadata and explicit evidence limitations. Model alias/snapshot availability and child-data eligibility remain separate checks.
-
-Evidence: none yet.
+Live streaming transcription from server-side subscription to each voice track, word-level timing, and retention rules for real-child use ([privacy-and-safety.md](../privacy-and-safety.md)).

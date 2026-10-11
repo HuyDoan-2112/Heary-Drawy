@@ -1,75 +1,48 @@
 # Implementation plan
 
-Status: **all features not started**. This organizes future work; it does not authorize starting the app, provisioning services, or running parallel agents automatically.
+Status: **demo-first.** The only current goal is a working two-device demo: one iPad and one iPhone playing a round together, operated by adults on the same Wi-Fi. Everything that does not serve that goal is deferred, not deleted.
 
-## Build order and dependencies
+## What already works (local, not yet checked on real devices)
 
-| ID | Deliverable | Integration dependencies | Status |
-| --- | --- | --- | --- |
-| [01](features/01-foundation.md) | Workspace, runnable shells, canonical contracts, fixtures, test commands | None | Implemented |
-| [02](features/02-rooms-and-rounds.md) | Guest sessions, Room admission/pairing, authoritative phases | 01 | Implemented for demo - passcode admission, 3-round matches; see brief |
-| [03](features/03-drawing.md) | Finger canvas and read-only live relay | 01; 02 for authorized relay | Not started |
-| [04](features/04-object-viewer.md) | Private object/reference access and 3D viewer | 01; 02 for role/phase gates | Not started |
-| [05](features/05-live-voice.md) | Two-device independent hold-to-talk | 01 + 02; real devices/provider account | Not started |
-| [06](features/06-transcription.md) | Separate attributed live transcription | 05; approved demo AI access | Not started |
-| [07](features/07-feedback.md) | Speech/image evidence and separate role feedback | 03 + 06; rubric decision for stars | Not started |
-| [08](features/08-round-integration.md) | Complete human Round, Reveal, reward, role swap | 02-07; match length and disconnect timeout decisions | Not started |
-| [09](features/09-demo-hardening.md) | Recovery, Safari/device acceptance, controlled deployment | 08; host/retention/deployment decisions | Not started |
-| [10](features/10-bot-partner.md) | Odd-player partner supporting both roles | Accepted real-pair demo through 09 | Not started / later |
+Built in [02](features/02-rooms-and-rounds.md) plus the minimal round slice recorded there:
 
-**Sequential path:** 01 -> 02 -> 03 -> 04 -> 05 -> 06 -> 07 -> 08 -> 09. Feature 10 follows later.
+- Grown-up passcode unlocks each device; children pick a character/name and get paired.
+- Random roles, short role intro, 3-round match with role swap on Play again.
+- Server picks a secret picture per round; only the Speaker sees it until Reveal.
+- Drawer's strokes relay live to the Speaker's read-only canvas.
+- Hold-to-talk voice: peer-to-peer WebRTC, signaled over the existing socket.
+- Done reveals the picture beside the drawing with a neutral, unscored result (replaced by AI feedback in D2).
 
-Do not wait until integration to test the riskiest path: after 02, prove real two-device voice in 05 before investing heavily in AI or polished full-round UI. Known device/network/SDK problems should change the next task, not remain hidden behind mock success.
+## Demo plan
 
-## Parallel lanes
+| Step | Deliverable | Status |
+| --- | --- | --- |
+| D1 | **Reachable from devices.** One command serves the web app over HTTPS on the LAN (iOS Safari requires HTTPS for the microphone) and allows that origin on the API socket. | Not started |
+| D2 | **AI feedback.** Transcribe each hold-to-talk clip with Whisper on the laptop, then at Done ask DeepSeek for separate Speaker and Drawer feedback plus 1-3 team stars. Design in [06](features/06-transcription.md) and [07](features/07-feedback.md). | Not started |
+| D3 | **Real-device walkthrough.** On the actual iPad and iPhone: join, play 3 rounds in both role directions, talk while drawing, Play again, Done. Fix whatever breaks or looks wrong. Record device models/iOS versions and results in [testing.md](testing.md). | Not started |
+| D4 | **Demo script.** Short README section: start command, passcode, what to tap, known limits. | Not started |
 
-After 01 freezes relevant contracts:
+The demo is done when D3 passes on both devices with no stuck mic, no leaked picture to the Drawer, and no layout breakage.
 
-- **Room/authority lane:** 02 owns sessions, admission, phases, role projections, and coordinated migrations.
-- **Canvas lane:** isolated 03 UI/stroke model can proceed against sanitized fixtures while 02 is built. Authorized relay integrates only after 02 is available.
-- **Object lane:** isolated 04 viewer/reference fallback can proceed with synthetic assets. Private delivery integrates after 02.
-- **Media lane:** 05 integrates after 02. It may proceed alongside canvas/object work if nobody races to change shared socket schemas/app wiring.
-- **Analysis lane:** 06 follows real media; 07's pure evidence/rule tests and panel rendering may use fixtures before its final real-service integration.
-- **Integration lane:** 08 connects accepted modules. It is a deliberate owner, not several people rewriting the application shell concurrently.
+## Deliberately deferred
 
-Parallel isolated work is not permission to bypass a dependency or call an integration complete. Use the feature briefs' planned source areas. No CRDT, extra state bus, or multi-service architecture is needed just to work in parallel.
+These stay documented as future ideas. Do not build them for the demo.
 
-## Shared-file ownership
+| Deferred | Demo substitute | Brief |
+| --- | --- | --- |
+| LiveKit, TURN, server-side mic grants/revocation | Peer-to-peer WebRTC on one Wi-Fi network | [05](features/05-live-voice.md) |
+| Interactive 3D GLB viewer, private Storage | Server-picked 2D picture, Speaker-only until Reveal | [04](features/04-object-viewer.md) |
+| Live streaming transcription | Each clip transcribed after release with Whisper on the laptop | [06](features/06-transcription.md) |
+| Curated tip library, reviewed long-term star rubric | DeepSeek writes short gentle lines; stars from a simple demo rule | [07](features/07-feedback.md) |
+| Hosted deployment, host authorization, retention hardening | Laptop on the LAN, CLI passcode, local Postgres | [09](features/09-demo-hardening.md) |
+| Drawing resync/revision guarantees beyond what exists | Current live relay | [03](features/03-drawing.md) |
+| Bot partner | Exactly two players | [10](features/10-bot-partner.md) |
+| Round timer, disconnect-timeout help screen | Adults restart if a device drops | [02](features/02-rooms-and-rounds.md) |
 
-| Shared area | Coordination rule |
-| --- | --- |
-| `docs/api.md`, canonical schemas, exports/generated types | One contract owner; all consumers review breaking changes before merge |
-| Database migrations/data constraints | One migration owner; other features propose additions and test affected flows |
-| Package manifests/lockfiles and environment setup | Foundation/integration owner; avoid simultaneous dependency edits |
-| Frontend bootstrap/routes and backend registration/startup | Integration owner; feature lanes expose modules rather than rewiring the whole app |
-| Product/lifecycle rules | Update owning docs when user resolves a decision; do not invent lane-specific behavior |
-| Feature status | Owner records evidence; plan summary must agree |
+The demo sends drawings and transcripts (not audio) to the DeepSeek API. Real-child use stays blocked by [privacy-and-safety.md](privacy-and-safety.md); the demo uses adults only.
 
-No named humans/agents are assigned yet. The current request creates a work structure, not a swarm.
+## Rules of thumb
 
-## Milestones
-
-1. **Runnable base:** 01; honest commands and typed fixtures exist.
-2. **Authorized live conversation:** 02 + 05 on actual devices, without AI in the audio path.
-3. **Visible collaboration:** 03 + 04 integrated; Speaker retains 3D and sees live canvas while Drawer stays secret-blind.
-4. **End-to-end human round:** 06-08; two feedback panels, neutral failures, exploration, and swapped roles.
-5. **Controlled demo ready:** 09 with recorded checks/known limitations, adults/synthetic data only unless child gates separately pass.
-6. **Odd-player completeness:** 10 without secret shortcuts.
-
-## How to start a task
-
-Give the contributor the feature brief, `AGENTS.md`, and its referenced docs. Example:
-
-> Implement feature 03 only. Use the agreed contracts and existing foundation. Work in the drawing areas and tests; coordinate contract/migration changes. Do not implement voice, object selection, AI, or full-round wiring. Report unmet dependencies.
-
-If a dependency is absent, choose either its implementation first or explicitly authorize isolated fixture-backed work. Do not create fake backend/provider behavior and imply the feature is integrated.
-
-## Definition of done
-
-- Scope implemented without unrelated features.
-- Contract/authorization/failure tests pass; required end-user/actual-device checks recorded.
-- No leaked secrets, provider credentials, stale states, or falsely claimed test coverage.
-- Relevant specs, real commands, feature status, and plan summary updated.
-- Demonstration/review completed for the agreed slice; remaining release gates explicit.
-
-All checkboxes in feature briefs start unchecked. Mark blocked/partial honestly, and do not move automatically to the next feature just because one task was approved.
+- Fix only what blocks or visibly breaks the two-device demo.
+- No new services, providers, or abstractions beyond those in this plan (local Whisper and DeepSeek).
+- Mark device checks complete only after running them on the real iPad and iPhone.

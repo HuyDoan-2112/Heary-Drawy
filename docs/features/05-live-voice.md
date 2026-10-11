@@ -1,42 +1,21 @@
-# 05 - Independent live hold-to-talk
+# 05 - Hold-to-talk voice
 
-Status: **not started**  
-Dependencies: [01](01-foundation.md) + [02](02-rooms-and-rounds.md); LiveKit access and actual devices  
-References: [architecture](../architecture.md), [API](../api.md), [lifecycle](../round-lifecycle.md), [testing](../testing.md)
+Status: **demo version built (peer-to-peer); needs HTTPS (D1) and real-device checks**
+Dependencies: [02](02-rooms-and-rounds.md)
 
-## Deliverable
+## Demo version
 
-Two authorized devices hear each other's original voice live while either/both hold their mic buttons. Release stops transmission. AI is not in the delivery path.
+The two devices send audio directly to each other over WebRTC; the room socket carries only connection setup (`apps/web/src/features/voice/voice.ts`). The mic is captured once after the "Turn on mic" tap, and its track stays muted except while the player holds the talk button. Both can hold at once. Uses a public STUN server and no TURN relay, so both devices must be on the same Wi-Fi.
 
-## Scope and ownership
+iOS Safari allows the microphone only on HTTPS pages (or localhost), so the web app must be served over HTTPS on the LAN - step D1 in the [implementation plan](../implementation-plan.md).
 
-Own frontend voice module, backend media permission/hold module, and associated tests. Coordinate canonical socket messages and startup wiring.
+## Demo checks (part of D3)
 
-- One pair-scoped LiveKit room, microphone-only human tracks, scoped subscribe-only joining tokens, independent publication grants per participant.
-- Explicit permission/playback unlock and readiness; reuse one mic capture path without an always-open publication.
-- Local release/cancel immediately stops transmit. Backend confirms grants, revokes publication, and compensates canceled delayed grants.
-- Per-participant hold IDs/epochs/deadlines, connection health, background/lifecycle handling, restart reconciliation.
-- Pause on revocation/provider failures; never rely only on token expiry/UI state.
+- [ ] Each device hears the other while its button is held, in both directions and when both hold together.
+- [ ] Releasing the button stops audio; no mic stays on after Done or leaving.
+- [ ] Voice keeps working after Play again and role swap.
+- [ ] Echo and volume are acceptable with the two devices in the same room.
 
-Perform this two-device risk spike soon after 02; do not wait for completed AI, canvas polish, or the full Round UI.
+## Later (deferred)
 
-## Out of scope
-
-STT, model coaching, audio recording/replay, camera/video/screen-share, public voice rooms, and an always-open call.
-
-## Acceptance
-
-- [ ] Real HTTPS Safari audio works both directions and with both participants holding concurrently.
-- [ ] Partner hears before any AI analysis; first/last words, echo, and observable start/stop latency are checked.
-- [ ] Release-before-grant, cancellation, backgrounding, lost socket, phase exit, and Room closure stop/cancel transmission.
-- [ ] Provider revocation actually removes publication; revoked-token behavior is tested against pinned SDK/API.
-- [ ] Pair isolation and unauthorized third-session publication/subscription attempts are denied.
-- [ ] Reconnect/restart never automatically reopens a microphone.
-- [ ] Poor-network/cross-network and TURN behavior are exercised where available; gaps recorded.
-- [ ] Backend-crash cooperative cutoff limitation is explicit; no false malicious-client guarantee.
-
-## Handoff
-
-Expose separately identified authorized tracks to 06 without adding another browser recorder. Record SDK/device/network evidence and unresolved deployment-wide cutoff gates.
-
-Evidence: none yet.
+LiveKit with TURN for different networks, server-granted and revocable mic permission per hold, handling for backgrounding/lost sockets, and the hold identities that transcription in [06](06-transcription.md) would need.

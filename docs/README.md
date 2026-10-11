@@ -1,6 +1,6 @@
 # Documentation map
 
-Status: current design and implementation briefs; no application code or cloud resources implemented.
+Status: demo-first. A minimal playable round runs locally; the goal is a two-device iPad + iPhone demo. See [implementation-plan.md](implementation-plan.md).
 
 ## Sources of truth
 
@@ -19,18 +19,18 @@ Status: current design and implementation briefs; no application code or cloud r
 
 ## Feature briefs
 
-Each brief defines a bounded deliverable. Feature 01 is implemented; later features are **not started**.
+Each brief defines a bounded deliverable. 01 and 02 (plus a minimal round slice) are implemented; 03-10 are **deferred** future work. The current work is demo steps D1-D4 in the implementation plan.
 
 1. [Foundation and contracts](features/01-foundation.md)
 2. [Guest rooms, pairing, and round authority](features/02-rooms-and-rounds.md)
 3. [Drawing and live canvas](features/03-drawing.md)
-4. [Private 3D reference and assets](features/04-object-viewer.md)
-5. [Live hold-to-talk voice](features/05-live-voice.md)
-6. [Attributed transcription](features/06-transcription.md)
-7. [Separate role feedback](features/07-feedback.md)
+4. [Secret picture (3D later)](features/04-object-viewer.md)
+5. [Hold-to-talk voice](features/05-live-voice.md)
+6. [Transcription](features/06-transcription.md)
+7. [AI feedback and shared result](features/07-feedback.md)
 8. [Round integration, reveal, and role swap](features/08-round-integration.md)
-9. [Device hardening and demo release](features/09-demo-hardening.md)
-10. [Bot partner, after the real-pair demo](features/10-bot-partner.md)
+9. [Demo setup](features/09-demo-hardening.md)
+10. [Bot partner (later)](features/10-bot-partner.md)
 
 Read a brief together with its referenced contracts. Feature files describe execution scope and acceptance, not independent copies of the product rules.
 

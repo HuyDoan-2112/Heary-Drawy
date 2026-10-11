@@ -1,6 +1,6 @@
 # Product specification
 
-Status: current agreed behavior, with open decisions listed separately. This replaces earlier describe-then-draw rules in the research reports. No gameplay has been implemented or tested.
+Status: current agreed behavior, with open decisions listed separately. This replaces earlier describe-then-draw rules in the research reports. A minimal round is implemented for the demo (2D secret picture instead of 3D, neutral result instead of AI feedback); see [implementation-plan.md](implementation-plan.md).
 
 ## Purpose and demo scope
 

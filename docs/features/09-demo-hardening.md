@@ -1,37 +1,20 @@
-# 09 - Device hardening and controlled demo release
+# 09 - Demo setup
 
-Status: **not started**  
-Dependencies: [08](08-round-integration.md), reviewed demo host/retention/deployment policy  
-References: [testing](../testing.md), [privacy](../privacy-and-safety.md), [architecture](../architecture.md)
+Status: **not started - steps D1 and D4 in the [implementation plan](../implementation-plan.md)**
+Dependencies: [08](08-round-integration.md)
 
-## Deliverable
+## Demo version
 
-A documented, stable adult-only two-device demo with reproducible setup, recovery/fallback checks, protected host access, and explicit known limits.
+The demo runs from a laptop on the same Wi-Fi as the iPad and iPhone. No hosting.
 
-## Scope and ownership
+- **D1:** one command starts the API and serves the web app over HTTPS on the LAN (a self-signed or locally trusted certificate is fine), allows that origin on the room socket, and prints the URL and Room passcode. It reads `DEEPSEEK_API_KEY` from the shell for AI feedback; without it rounds use the neutral result.
+- **D4:** a short README section: start command, how to open the URL on each device (including accepting the certificate if needed), passcode entry, what to tap, and known limits.
 
-Own cross-feature E2E/device acceptance and deployment configuration/run instructions. Coordinate shared dependency/configuration changes; do not replace feature modules casually.
+## Demo checks
 
-- Configure HTTPS, correct browser/backend origins, persistent non-sleeping runtime, secrets, private Storage, and provider accounts only with deployment authorization.
-- Resolve host access and demo retention/cleanup. Keep real-child/public launch gates separate.
-- Exercise mic/playback unlock, Safari foreground/background, orientation, multitouch, canvas/3D memory, poor connectivity, TURN, restart, and expiry.
-- Confirm clean fallback/retry paths and no secret/credential/raw-media logging.
-- Record actual devices/OS, SDK/model versions, test scenarios, measured behavior, and honest limitations.
+- [ ] From a fresh clone, the README steps get both devices into a round.
+- [ ] The microphone prompt appears on both devices (proves the page is a secure context).
 
-## Out of scope
+## Later (deferred)
 
-Automatic public launch, native distribution, legal certification, clinical/learning-effect claims, or solving every future scaling concern.
-
-## Acceptance
-
-- [ ] Both devices pass applicable actual-device cases in the test strategy, both role directions.
-- [ ] Disconnect/restart/provider-failure paths fail safely without stuck mics, duplicated results, or lost secret barriers.
-- [ ] Host/detail access is protected; controlled participant-only assumptions are documented.
-- [ ] Room/session/draft/transcript/result cleanup follows the reviewed policy, including deployment logs/backups.
-- [ ] Setup, start/stop, recovery, and demonstration instructions work and contain no committed secrets.
-- [ ] Unresolved malicious-client backend-crash cutoff is disclosed; broader child deployment remains gated.
-- [ ] README and feature/plan status reflect evidence, not aspirations.
-
-Deployment is not implied by documentation or code completion. Ask before provisioning or publishing.
-
-Evidence: none yet.
+Hosted HTTPS deployment, TURN, protected grown-up access instead of a CLI passcode, retention/cleanup for real use, and broader device and network testing. Real-child use stays blocked by [privacy-and-safety.md](../privacy-and-safety.md).

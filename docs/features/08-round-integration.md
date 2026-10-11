@@ -1,40 +1,21 @@
-# 08 - Human round integration, Reveal, and role swap
+# 08 - Full round, Reveal, and role swap
 
-Status: **not started**  
-Dependencies: integrated [02](02-rooms-and-rounds.md)-[07](07-feedback.md)  
-References: [product](../product.md), [lifecycle](../round-lifecycle.md), [API](../api.md), [testing](../testing.md)
+Status: **demo version built; real-device walkthrough is step D3**
+Dependencies: [02](02-rooms-and-rounds.md)-[07](07-feedback.md) demo versions
 
-## Deliverable
+## Demo version
 
-One complete human Round works across the two devices, followed by exploration and another Round with swapped roles.
+The web app runs the whole flow from server snapshots: grown-up passcode, character pick, pairing, role intro, live drawing and voice, Done, Reveal with the neutral result (AI feedback after D2), Play again with roles swapped, up to 3 rounds, and Done to leave.
 
-## Scope and ownership
+## Demo checks (D3)
 
-Own frontend app/round wiring, backend transition integration, and full-round E2E tests. Feature modules remain owned by their lanes; coordinate fixes rather than rewriting them.
+- [ ] Two adults complete 3 rounds on the real iPad and iPhone, each device playing both roles.
+- [ ] Drawing and holding the talk button at the same time work (multitouch).
+- [ ] Play again waits for both players, then swaps roles once.
+- [ ] No screen has broken layout, clipped text, or horizontal scrolling on either device.
 
-- Implement short role intro with no separate private preparation period; review/resolve match length and Play again disconnect timeout before acceptance.
-- Wire Speaker's persistent private 3D reference plus read-only live canvas; Drawer edit view remains secret-blind.
-- Enable both hold-to-talk controls during collaboration, including clarification and overlapping speech.
-- Freeze acknowledged drawing, stop grants, finalize transcripts, show separate feedback and shared result.
-- Reveal object/reference beside drawing; offer 3D Discovery Reward and usable fallback regardless of AI status.
-- Advance under reviewed acknowledgement/disconnect policy, swap roles, and deliver new projections without secret preloads.
+Record device models, iOS versions, and results in [testing.md](../testing.md).
 
-## Out of scope
+## Later (deferred)
 
-New social features, real-child pilot, bot shortcuts, cosmetic redesign of accepted modules, and optional native packaging.
-
-## Acceptance
-
-- [ ] Two adults complete a real HTTPS/device round and then play swapped roles.
-- [ ] Speaker keeps object access while correcting/clarifying; live canvas stays read-only for them.
-- [ ] Drawer never receives secret data before Reveal; third-session requests fail.
-- [ ] Drawing/mic multitouch works; lost connection/canceled grants/late strokes do not corrupt submission.
-- [ ] Both role panels show evidence-based gentle feedback; incomplete AI still allows exploration and Play again.
-- [ ] Play again and retries advance once; late prior-Round events cannot affect the new Round.
-- [ ] Actual flow matches reviewed role intro, Play again, timing, and fallback rules in current docs.
-
-## Handoff
-
-Record a complete walkthrough, real services/device versions, remaining recovery/privacy gates, and any fixture-only portions. Passing a mocked browser flow is not this feature's real-device completion.
-
-Evidence: none yet.
+A round timer, a 60-second disconnect timeout with a grown-up help screen, and recovery from late events across rounds.

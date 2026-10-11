@@ -2,14 +2,14 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: Feature 01 foundation and a local Feature 02 Postgres-backed guest-room slice are implemented. Already-admitted guests can be matched within a server-private Room, see live presence, acknowledge role intro, and receive server-pushed state. There is no child-facing Room join flow. Other screens are fixture previews; real gameplay is not integrated. No hosted deployment, drawing relay, voice, object delivery, AI feedback, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
+**Current state: a minimal playable round runs locally - grown-up passcode join, pairing, random roles, a secret 2D picture only the Speaker sees, live drawing relay, peer-to-peer hold-to-talk voice, reveal with a neutral result, and 3 rounds with role swap. Not yet checked on a real iPad/iPhone. No hosted deployment, 3D objects, AI transcription, or AI feedback.** The current goal is a two-device iPad + iPhone demo on one Wi-Fi network, with adults only; see the [implementation plan](docs/implementation-plan.md).
 
 ## Start here
 
 - [Product and confirmed gameplay](docs/product.md)
 - [Architecture and proposed stack](docs/architecture.md)
 - [API and WebSocket contracts](docs/api.md)
-- [Implementation plan and parallel work](docs/implementation-plan.md)
+- [Implementation plan (demo-first)](docs/implementation-plan.md)
 - [Documentation index](docs/README.md)
 - [Domain glossary](CONTEXT.md)
 

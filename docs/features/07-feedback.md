@@ -1,36 +1,27 @@
-# 07 - Separate role feedback and shared result
+# 07 - AI feedback and shared result
 
-Status: **not started**  
-Dependencies: [03](03-drawing.md) + [06](06-transcription.md) for integration; fixture-backed pure rules/UI can start after 01  
-References: [product](../product.md), [data model](../data-model.md), [testing](../testing.md), [privacy](../privacy-and-safety.md)
+Status: **planned for the demo (step D2); neutral result built**
+Dependencies: [03](03-drawing.md), [04](04-object-viewer.md), [06](06-transcription.md)
 
-## Deliverable
+## Demo version
 
-A finalized Round receives separate Speaker and Drawer recaps/tips and one shared team result, grounded in evidence rather than artistic grading.
+At Done, DeepSeek looks at what the Speaker said and what the Drawer drew, and both players get their own gentle feedback plus one shared 1-3 star team result.
 
-## Scope and ownership
+- **Checklist:** each catalog picture gets 3-5 visual features in `services/api/app/game/objects.py`, e.g. Apple: red, round body, stem on top, leaf.
+- **Flow:** Done moves the round to `checking` (the existing Checking screen). A background task waits up to ~15 s for that round's pending transcriptions, then makes one DeepSeek call. The result is saved once and pushed to both players, who move on to Reveal.
+- **Drawing image:** the server renders the stored strokes to a PNG (Pillow), so the analyzed image is exactly what the server accepted.
+- **DeepSeek call:** DeepSeek's OpenAI-compatible Chat Completions API via the `openai` Python SDK with DeepSeek's base URL, one request with the PNG, the picture's name and checklist, and the round's transcripts labeled Speaker/Drawer. The model must accept image input: third-party reports (September 2026) say `deepseek-flash` (V4.1 Flash) does and the Pro model does not - confirm the model ID and image limits in DeepSeek's official docs before building. Keep the model ID in one config value. Use JSON output mode and validate the reply with a Pydantic model on the server, since the schema is not enforced by the API. The reply gives, for each checklist feature, whether the Speaker described it and whether the drawing shows it, plus 1-2 short lines for each role. Lines are told to be warm, simple, for ages 5+, never about drawing skill, and never comparing the two players.
+- **Stars:** computed by the server, not chosen by the model: 3 stars if most features were both described and drawn, 2 if some, otherwise 1. Never 0.
+- **Fallback:** no `DEEPSEEK_API_KEY`, a timeout (~20 s), an API error, or output that fails validation all give the existing neutral result. Reveal and Play again always work.
+- **Privacy:** only the drawing PNG, the picture name/checklist, and transcript text go to DeepSeek - no audio, names, or device info. Adults only.
 
-Own backend analysis/feedback modules, frontend feedback panels, fixture evaluation, and tests. Coordinate result/job migrations and result schemas with their owners.
+## Demo checks
 
-- GPT-5.4 Mini snapshot text analysis for Speaker features with relevant quotes, attribution, paraphrase, and negation handling.
-- Separate submitted-image analysis for visual features; validate schemas/feature IDs and uncertainty.
-- Derive Drawer feedback from communicated visual features, not every private object detail or nondrawable function clue.
-- Curated child-facing copy only. No model-generated unrestricted criticism or direct model star assignment.
-- Versioned deterministic shared-star rules after user reviews the rubric; neutral/unscored path until then and on incomplete evidence.
-- Durable Postgres jobs with bounded claims/retries/deadlines; atomically persist one Result and feedback transition.
+- [ ] A round where the Speaker clearly describes the picture gets matching Speaker and Drawer feedback and 2-3 stars on both devices.
+- [ ] A round with no talking still gets kind feedback and at least 1 star.
+- [ ] With the API key removed, the round shows the neutral result and continues normally.
+- [ ] Feedback text fits the Reveal screen on the iPhone without clipping.
 
-## Parallel boundary
+## Later (deferred)
 
-Pure rule tests and panel layouts can use explicit sanitized evidence fixtures. Do not label them real transcription/vision success. Real integration needs the frozen drawing and final attributed transcripts.
-
-## Acceptance
-
-- [ ] Speaker positives are supported by their own relevant evidence, not only Drawer keywords or negated/injected text.
-- [ ] Drawer is not penalized for unspoken, nonvisual, uncertain, or artistically rough details.
-- [ ] Each role gets its own gentle recap/tip; both stay a team, not ranked against each other.
-- [ ] Malformed/unknown model fields are rejected or marked uncertain; no model commands execute.
-- [ ] Retry/stale-job/provider-failure tests produce one immutable Result and a neutral fallback.
-- [ ] Approved rubric version/model configuration is recorded; exact adult metrics remain separately protected.
-- [ ] Adult/synthetic rough-drawing/speech evaluation includes uncertain/ambiguous examples.
-
-Evidence: none yet.
+A curated tip library instead of model-written lines, a reviewed long-term star rubric, an evaluation set of adult/synthetic rounds, and the protected grown-ups detail view.

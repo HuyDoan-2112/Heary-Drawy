@@ -12,7 +12,7 @@ These current docs override superseded mechanics in `docs/research/` and the his
 
 ## Scope discipline
 
-- This repository currently has no application implementation. Do not invent working commands or claim providers/devices were tested.
+- The current goal is the two-device demo in `docs/implementation-plan.md`. Do not build deferred features for it. Do not invent working commands or claim providers/devices were tested.
 - A request to organize docs or revise a diagram is not permission to implement the app.
 - When implementation is requested, work on the named feature or agreed vertical slice. Do not automatically continue into the next feature, deploy, commit, or push.
 - Read that feature's dependencies and acceptance checks before editing. Resolve a blocking product question explicitly; do not quietly replace it with a new rule.
@@ -20,7 +20,6 @@ These current docs override superseded mechanics in `docs/research/` and the his
 
 ## Parallel work
 
-- Follow the ownership and dependency map in `docs/implementation-plan.md`.
 - One owner coordinates shared API/schema changes, migrations, dependencies/lockfiles, and app entry-point wiring. Other lanes propose changes rather than racing to edit them.
 - Freeze the relevant contract before parallel work; use clearly labeled fixtures for unavailable integrations. Fixtures do not establish real integration success.
 - Do not overwrite another contributor's work. Inspect the worktree before and after the task.
