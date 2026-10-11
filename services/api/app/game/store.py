@@ -210,6 +210,14 @@ class GameStore:
             ).fetchall()
         return tuple(row["player_id"] for row in rows)
 
+    def close_open_rooms(self) -> int:
+        """Close every Room that is still open; returns how many were closed."""
+        with self._tx() as db:
+            rows = db.execute("select room_id from rooms where closed_at is null").fetchall()
+        for row in rows:
+            self.close_room(row["room_id"])
+        return len(rows)
+
     def delete_expired_rooms(self, retention: timedelta = RETENTION_AFTER_ROOM_END) -> int:
         """Delete every Room (and all of its data) that closed or expired more than `retention` ago."""
         with self._tx() as db:

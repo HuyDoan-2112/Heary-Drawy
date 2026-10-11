@@ -4,14 +4,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MusicProvider } from '../../app/ui/frame';
 import { FakeWebSocket, snapshotMessage, waitingMessage } from '../../test/fakeWebSocket';
 import type { GuestSession } from '../rooms/api';
+import { hasMicrophone } from '../voice/voice';
 import { LiveGame } from './LiveGame';
+
+vi.mock('../voice/voice', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../voice/voice')>()),
+  hasMicrophone: vi.fn(() => true),
+}));
 
 const session: GuestSession = {
   room_id: 'room-1', player_id: 'player-1', guest_session_token: 'secret-token', expires_at: '2099-01-01T00:00:00Z',
 };
 
 function connect(onExit = vi.fn()) {
-  render(<MusicProvider><LiveGame session={session} startAtMic={false} onExit={onExit} /></MusicProvider>);
+  render(<MusicProvider><LiveGame session={session} justJoined={false} onExit={onExit} /></MusicProvider>);
   const socket = FakeWebSocket.latest;
   act(() => socket.open());
   act(() => socket.receive({ protocol_version: 1, type: 'session.authenticated', payload: {} }));
@@ -34,6 +40,19 @@ afterEach(() => {
 });
 
 describe('LiveGame', () => {
+  it('asks for the mic again when a reloaded tab resumes its session, then goes straight back to the game', async () => {
+    vi.mocked(hasMicrophone).mockReturnValueOnce(false);
+    const user = userEvent.setup();
+    const socket = connect();
+    act(() => socket.receive(snapshotMessage({ role: 'speaker' })));
+    expect(screen.getByRole('heading', { name: 'Can we hear you?' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Turn on mic' }));
+
+    expect(await screen.findByRole('heading', { name: 'You and Kiwi are a team!' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Pick a game!' })).not.toBeInTheDocument();
+  });
+
   it('authenticates first, then shows waiting and the paired team screen', () => {
     const socket = connect();
     expect(socket.url).toBe('ws://localhost:3000/api/v1/rooms/room-1/socket');
