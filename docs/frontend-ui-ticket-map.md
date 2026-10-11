@@ -1,6 +1,6 @@
 # Frontend UI ticket map
 
-Status: planning aid. UI-01 through UI-09 are implemented as fixture-backed screens. This breaks [`frontend-ui-implementation-spec.md`](frontend-ui-implementation-spec.md) into independently reviewable implementation tickets. It does not authorize building ahead of the feature dependencies in [`implementation-plan.md`](implementation-plan.md).
+Status: planning aid. UI-01 through UI-09 and UI-13 through UI-15 are implemented as fixture-backed screens. This breaks [`frontend-ui-implementation-spec.md`](frontend-ui-implementation-spec.md) into independently reviewable implementation tickets. It does not authorize building ahead of the feature dependencies in [`implementation-plan.md`](implementation-plan.md).
 
 ## Purpose
 
@@ -24,9 +24,9 @@ Do not treat the frontend UI spec as one large ticket. Each ticket below has exp
 | UI-10 | Drawing component integration | Feature 03 | Feature 08 round integration |
 | UI-11 | Object viewer integration | Feature 04 | Feature 08 Reveal/reward |
 | UI-12 | Hold-to-talk integration | Feature 05 | Feature 08 round integration |
-| UI-13 | Checking/finalizing | Feature 07 fixtures or accepted fallback contract | Feature 08 finalization |
-| UI-14 | Result and Discovery Reward | Features 04, 07 | Feature 08 Play again/role swap |
-| UI-15 | Grown-ups gate placeholder | UI-01 | Blocked for real access until host authorization is decided |
+| UI-13 | Checking/finalizing | Feature 07 fixtures or accepted fallback contract | Implemented as fixture-backed screen |
+| UI-14 | Result and Discovery Reward | Features 04, 07 | Implemented as fixture-backed screen |
+| UI-15 | Grown-ups gate placeholder | UI-01 | Implemented as blocked fixture gate; real access still blocked |
 | UI-16 | Recovery and failure states | Relevant feature fallback contracts | Feature 09 hardening |
 | UI-17 | Visual/device acceptance pass | Implemented screen slices | Feature 09 hardening |
 

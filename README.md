@@ -67,7 +67,7 @@ Run the web fixture shell:
 npm run dev:web
 ```
 
-Open `http://localhost:5173/join` to start the fixture flow. Implemented fixture routes are `/join`, `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, and `/play/drawer`.
+Open `http://localhost:5173/join` to start the fixture flow. Implemented fixture routes are `/join`, `/mic`, `/mode`, `/team`, `/intro`, `/play/speaker`, `/play/drawer`, `/checking`, `/result`, and `/grownups`.
 
 Run the API shell:
 

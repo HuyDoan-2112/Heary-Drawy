@@ -386,7 +386,8 @@ p {
 }
 
 .team-screen,
-.role-intro {
+.role-intro,
+.checking-screen {
   place-items: center;
   text-align: center;
 }
@@ -647,6 +648,146 @@ p {
   justify-content: space-between;
 }
 
+.checking-screen {
+  grid-template-columns: minmax(150px, 0.45fr) minmax(0, 1fr);
+  align-items: center;
+  text-align: left;
+}
+
+.checking-panel,
+.feedback-card,
+.lock-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  background: white;
+  box-shadow: 0 6px 0 var(--ink);
+  font-weight: 800;
+}
+
+.checking-panel span {
+  width: 72px;
+  height: 72px;
+  border: 5px solid var(--ink);
+  border-top-color: var(--coral);
+  border-radius: 999px;
+}
+
+.result-screen {
+  gap: 18px;
+}
+
+.result-hero {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.35fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+.result-badge {
+  width: fit-content;
+  margin-bottom: 10px;
+  padding: 8px 16px;
+  border: 4px solid var(--ink);
+  border-radius: 999px;
+  background: var(--sun);
+  font-weight: 900;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.comparison-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  background: white;
+}
+
+.reward-object {
+  min-height: 280px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 18px;
+  border: 5px solid var(--ink);
+  border-radius: 26px;
+  background: linear-gradient(160deg, #fff0b8, #d9f0ff 68%, #c6eed8);
+  text-align: center;
+}
+
+.reward-object span {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border: 5px solid var(--ink);
+  border-radius: 28px;
+  background: var(--mint);
+  color: white;
+  font-size: 2rem;
+  font-weight: 900;
+  transform: rotate(7deg);
+}
+
+.feedback-card {
+  background: #fff5c8;
+}
+
+.feedback-card strong {
+  font-size: 1.4rem;
+}
+
+.grownups-screen {
+  width: min(100%, 430px);
+  min-height: min(760px, calc(100vh - 138px));
+  padding: 18px;
+  background: #f7fbff;
+}
+
+.phone-gate {
+  min-height: 100%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 18px;
+  padding: 22px;
+  border: 4px solid var(--ink);
+  border-radius: 34px;
+  background: var(--paper);
+  text-align: center;
+}
+
+.phone-gate .drawy {
+  width: 150px;
+}
+
+.phone-gate h1 {
+  font-size: clamp(2.3rem, 12vw, 4.3rem);
+}
+
+.lock-card {
+  box-shadow: none;
+}
+
+.lock-card span {
+  width: fit-content;
+  justify-self: center;
+  padding: 6px 12px;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--grape);
+  color: white;
+}
+
 @media (min-width: 768px) {
   .flow-nav a,
   .name-field input,
@@ -679,7 +820,10 @@ p {
 
   .join-screen,
   .split-card,
-  .speaker-grid {
+  .speaker-grid,
+  .checking-screen,
+  .result-hero,
+  .result-grid {
     grid-template-columns: 1fr;
   }
 

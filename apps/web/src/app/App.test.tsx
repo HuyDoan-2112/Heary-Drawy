@@ -59,6 +59,26 @@ describe('fixture frontend routes', () => {
     expect(within(preview).getByText('Read-only live frame')).toBeInTheDocument();
   });
 
+  it('shows the Checking screen as a disabled finalizing fixture', async () => {
+    const user = userEvent.setup();
+    renderAt('/play/drawer');
+
+    await user.click(screen.getByRole('link', { name: 'Done!' }));
+
+    expect(screen.getByRole('heading', { name: 'Drawy is checking' })).toBeInTheDocument();
+    expect(screen.getByText(/Talking and drawing are paused/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Finalizing fixture state')).toHaveTextContent('No AI score is running');
+  });
+
+  it('shows a neutral Result and Discovery Reward fixture', () => {
+    renderAt('/result');
+
+    expect(screen.getByRole('heading', { name: 'You finished together!' })).toBeInTheDocument();
+    expect(screen.getByText(/Drawy had trouble checking this one/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Discovery Reward fixture')).toHaveTextContent('Available every round');
+    expect(screen.getByText('Drawy says')).toBeInTheDocument();
+  });
+
   it('keeps the grown-ups area blocked behind a placeholder gate', async () => {
     const user = userEvent.setup();
     renderAt('/join');
@@ -67,5 +87,6 @@ describe('fixture frontend routes', () => {
 
     expect(screen.getByRole('heading', { name: 'Grown-ups gate' })).toBeInTheDocument();
     expect(screen.getByText(/blocked until separate authorization/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Blocked grown-up access')).toHaveTextContent('No parent metrics');
   });
 });

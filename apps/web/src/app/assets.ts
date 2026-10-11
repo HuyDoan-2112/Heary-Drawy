@@ -12,6 +12,7 @@ import drawyCheer from '../../../../artifact/assets/drawy/drawy-cheer.svg';
 import drawyCurious from '../../../../artifact/assets/drawy/drawy-curious.svg';
 import drawyListen from '../../../../artifact/assets/drawy/drawy-listen.svg';
 import drawyProud from '../../../../artifact/assets/drawy/drawy-proud.svg';
+import drawySearch from '../../../../artifact/assets/drawy/drawy-search.svg';
 import drawyTalk from '../../../../artifact/assets/drawy/drawy-talk.svg';
 
 import type { AvatarId } from './fixtures';
@@ -34,5 +35,6 @@ export const drawyAssets = {
   curious: drawyCurious,
   listen: drawyListen,
   proud: drawyProud,
+  search: drawySearch,
   talk: drawyTalk,
 };

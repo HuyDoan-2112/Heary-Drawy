@@ -11,14 +11,16 @@ const routes = [
   { path: '/intro', label: 'Intro' },
   { path: '/play/speaker', label: 'Speaker' },
   { path: '/play/drawer', label: 'Drawer' },
+  { path: '/checking', label: 'Checking' },
+  { path: '/result', label: 'Result' },
 ] as const;
 
 type RoutePath = (typeof routes)[number]['path'];
-type AppPath = RoutePath | '/checking' | '/grownups';
+type AppPath = RoutePath | '/grownups';
 
 function currentPath(): AppPath {
   const path = window.location.pathname;
-  if (path === '/checking' || path === '/grownups') return path;
+  if (path === '/grownups') return path;
   return routes.some((route) => route.path === path) ? (path as RoutePath) : '/join';
 }
 
@@ -293,13 +295,65 @@ function HoldButton() {
 
 function CheckingScreen() {
   return (
-    <section className="screen-card split-card" aria-labelledby="checking-title">
-      <Mascot pose="proud" alt="Drawy waiting" />
+    <section className="screen-card checking-screen" aria-labelledby="checking-title">
+      <Mascot pose="search" alt="Drawy checking the drawing" />
       <div className="screen-copy">
-        <h1 id="checking-title">Checking is later</h1>
-        <p>This placeholder route exists so the Drawer Done button has a safe fixture destination.</p>
-        <a className="primary-button" href="/play/drawer">
-          Back to drawer shell
+        <h1 id="checking-title">Drawy is checking</h1>
+        <p>Talking and drawing are paused now. If checking takes too long, the round can still finish safely.</p>
+        <div className="checking-panel" aria-label="Finalizing fixture state">
+          <span />
+          <strong>Finalizing fixture</strong>
+          <small>No AI score is running in this demo shell.</small>
+        </div>
+        <div className="action-row left">
+          <a className="secondary-button" href="/play/drawer">
+            Back to drawer shell
+          </a>
+          <a className="primary-button" href="/result">
+            See result fixture
+          </a>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ResultScreen() {
+  return (
+    <section className="screen-card result-screen" aria-labelledby="result-title">
+      <div className="result-hero">
+        <Mascot pose="cheer" alt="Drawy celebrating" />
+        <div>
+          <p className="result-badge">Team result</p>
+          <h1 id="result-title">You finished together!</h1>
+          <p>Drawy had trouble checking this one, but you still finished the round together!</p>
+        </div>
+      </div>
+      <div className="result-grid">
+        <article className="comparison-card">
+          <p className="card-title">Your drawing</p>
+          <DrawingPreview readonly />
+        </article>
+        <article className="comparison-card reference-after-reveal">
+          <p className="card-title">Picture after Reveal</p>
+          <div className="reward-object" aria-label="Discovery Reward fixture">
+            <span>3D</span>
+            <strong>Discovery Reward</strong>
+            <small>Available every round, even without a score.</small>
+          </div>
+        </article>
+      </div>
+      <div className="feedback-card">
+        <strong>Drawy says</strong>
+        <p>You listened for the big shape.</p>
+        <p>Let's look at the picture and try another one.</p>
+      </div>
+      <div className="action-row">
+        <a className="secondary-button" href="/join">
+          Done
+        </a>
+        <a className="primary-button mint" href="/intro">
+          Play again
         </a>
       </div>
     </section>
@@ -308,11 +362,15 @@ function CheckingScreen() {
 
 function GrownupsScreen() {
   return (
-    <section className="screen-card split-card" aria-labelledby="grownups-title">
-      <Mascot pose="curious" alt="Drawy at a gate" />
-      <div className="screen-copy">
+    <section className="screen-card grownups-screen" aria-labelledby="grownups-title">
+      <div className="phone-gate">
+        <Mascot pose="curious" alt="Drawy at a gate" />
         <h1 id="grownups-title">Grown-ups gate</h1>
         <p>Real grown-up access is blocked until separate authorization is designed.</p>
+        <div className="lock-card" aria-label="Blocked grown-up access">
+          <span>Lock</span>
+          <strong>No parent metrics or host controls are available in this child fixture.</strong>
+        </div>
         <a className="secondary-button" href="/join">
           Back to child flow
         </a>
@@ -343,14 +401,6 @@ export function App() {
     };
   }, []);
 
-  if (activePath === '/checking') {
-    return (
-      <AppFrame activePath="/play/drawer">
-        <CheckingScreen />
-      </AppFrame>
-    );
-  }
-
   if (activePath === '/grownups') {
     return (
       <AppFrame activePath="/join">
@@ -367,6 +417,8 @@ export function App() {
     '/intro': <IntroScreen />,
     '/play/speaker': <SpeakerPlayScreen />,
     '/play/drawer': <DrawerPlayScreen />,
+    '/checking': <CheckingScreen />,
+    '/result': <ResultScreen />,
   }[activePath];
 
   return <AppFrame activePath={activePath}>{screen}</AppFrame>;
