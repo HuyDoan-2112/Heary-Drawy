@@ -7,6 +7,9 @@ import type { GuestSession } from '../rooms/api';
 import { hasMicrophone } from '../voice/voice';
 import { LiveGame } from './LiveGame';
 
+// The real 3D library needs WebGL; the tests only check what the game asks it to show.
+vi.mock('@google/model-viewer', () => ({}));
+
 vi.mock('../voice/voice', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../voice/voice')>()),
   hasMicrophone: vi.fn(() => true),
@@ -116,6 +119,58 @@ describe('LiveGame', () => {
     expect(await screen.findByRole('img', { name: 'Apple' })).toHaveAttribute('src', 'blob:picture');
     expect(fetchMock).toHaveBeenCalledWith('/api/v1/rounds/round-1/picture', { headers: { Authorization: 'Bearer secret-token' } });
     expect(document.querySelector('.partner-canvas path')).toHaveAttribute('d', 'M76 68 L380 340');
+  });
+
+  const access3d = {
+    object_id: 'apple', display_name: 'Apple',
+    image_url: '/api/v1/rounds/round-1/picture', model_url: '/api/v1/rounds/round-1/model',
+  };
+
+  function stubSecretFiles() {
+    const fetchMock = vi.fn(async (url: string) => new Response(url, { headers: { 'Content-Type': url.endsWith('/model') ? 'model/gltf-binary' : 'image/png' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    URL.createObjectURL = vi.fn((blob: Blob) => (blob.type === 'image/png' ? 'blob:picture' : 'blob:model'));
+    return fetchMock;
+  }
+
+  it('lets the speaker spin the secret object in 3D, with the picture while it loads', async () => {
+    const fetchMock = stubSecretFiles();
+    const socket = connect();
+    act(() => socket.receive(snapshotMessage({ phase: 'collaborating', role: 'speaker', extra: { object_access: access3d } })));
+
+    await waitFor(() => expect(document.querySelector('model-viewer')).toHaveAttribute('src', 'blob:model'));
+    const viewer = document.querySelector('model-viewer')!;
+    expect(viewer).toHaveAttribute('poster', 'blob:picture');
+    expect(viewer).toHaveAttribute('alt', 'Apple');
+    expect(viewer).toHaveAttribute('camera-controls');
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/rounds/round-1/model', { headers: { Authorization: 'Bearer secret-token' } });
+  });
+
+  it('keeps the picture when the 3D model cannot be shown', async () => {
+    stubSecretFiles();
+    const socket = connect();
+    act(() => socket.receive(snapshotMessage({ phase: 'collaborating', role: 'speaker', extra: { object_access: access3d } })));
+    await waitFor(() => expect(document.querySelector('model-viewer')).not.toBeNull());
+
+    act(() => {
+      document.querySelector('model-viewer')!.dispatchEvent(new Event('error'));
+    });
+
+    expect(document.querySelector('model-viewer')).toBeNull();
+    expect(screen.getByRole('img', { name: 'Apple' })).toHaveAttribute('src', 'blob:picture');
+  });
+
+  it('shows both players the 3D object at the reveal, but never the drawer before it', async () => {
+    const fetchMock = stubSecretFiles();
+    const socket = connect();
+    act(() => socket.receive(snapshotMessage({ phase: 'collaborating', role: 'drawer' })));
+    expect(document.querySelector('model-viewer')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    act(() => socket.receive(snapshotMessage({ phase: 'exploring', role: 'drawer', version: 2, extra: { object_access: access3d } })));
+
+    await waitFor(() => expect(document.querySelector('model-viewer')).toHaveAttribute('src', 'blob:model'));
+    expect(screen.getByRole('heading', { name: 'Great teamwork!' })).toBeInTheDocument();
   });
 
   it('shows the neutral result with Play again, and Done leaves the room', async () => {

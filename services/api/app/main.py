@@ -227,8 +227,13 @@ def create_app(
 
     @app.get("/api/v1/rounds/{round_id}/picture")
     async def picture(round_id: str, token: Annotated[str, Depends(bearer_token)]) -> Response:
-        svg = await run_in_threadpool(store.picture_svg, token, round_id)
-        return Response(svg, media_type="image/svg+xml", headers={"Cache-Control": "no-store"})
+        item = await run_in_threadpool(store.secret_object, token, round_id)
+        return Response(item.image_path.read_bytes(), media_type="image/png", headers={"Cache-Control": "no-store"})
+
+    @app.get("/api/v1/rounds/{round_id}/model")
+    async def model(round_id: str, token: Annotated[str, Depends(bearer_token)]) -> Response:
+        item = await run_in_threadpool(store.secret_object, token, round_id)
+        return Response(item.model_path.read_bytes(), media_type="model/gltf-binary", headers={"Cache-Control": "no-store"})
 
     socket_commands: dict[str, tuple[type[IntroSeenRequest], Callable[[str, str, str, int], CommandOutcome]]] = {
         "round.intro.seen": (IntroSeenRequest, store.acknowledge_intro),

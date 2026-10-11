@@ -8,7 +8,7 @@ Built in [02](features/02-rooms-and-rounds.md) plus the minimal round slice reco
 
 - Grown-up passcode unlocks each device; children pick a character/name and get paired.
 - Random roles, short role intro, 3-round match with role swap on Play again.
-- Server picks a secret picture per round; only the Speaker sees it until Reveal.
+- Server picks a secret 3D object per round; only the Speaker sees it (spin and zoom) until Reveal shows it to both.
 - Drawer's strokes relay live to the Speaker's read-only canvas.
 - Hold-to-talk voice: peer-to-peer WebRTC, signaled over the existing socket.
 - Done reveals the picture beside the drawing with a neutral, unscored result (replaced by AI feedback in D2).
@@ -31,7 +31,6 @@ These stay documented as future ideas. Do not build them for the demo.
 | Deferred | Demo substitute | Brief |
 | --- | --- | --- |
 | LiveKit, TURN, server-side mic grants/revocation | Peer-to-peer WebRTC on one Wi-Fi network | [05](features/05-live-voice.md) |
-| Interactive 3D GLB viewer, private Storage | Server-picked 2D picture, Speaker-only until Reveal | [04](features/04-object-viewer.md) |
 | Live streaming transcription | Each clip transcribed after release with Whisper on the laptop | [06](features/06-transcription.md) |
 | Curated tip library, reviewed long-term star rubric | DeepSeek writes short gentle lines; stars from a simple demo rule | [07](features/07-feedback.md) |
 | Hosted deployment, host authorization, retention hardening | Laptop on the LAN, CLI passcode, local Postgres | [09](features/09-demo-hardening.md) |

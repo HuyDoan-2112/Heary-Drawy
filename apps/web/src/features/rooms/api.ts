@@ -111,8 +111,8 @@ export async function uploadClip(session: GuestSession, roundId: string, clip: B
   }).catch(() => undefined);
 }
 
-/** Load a picture the server authorized for this child, as a local object URL. */
-export async function fetchPicture(session: GuestSession, url: string): Promise<string> {
+/** A secret picture or 3D model as a local object URL; the server checks this player may see it. */
+export async function fetchSecretFile(session: GuestSession, url: string): Promise<string> {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${session.guest_session_token}` } });
   if (!response.ok) throw new ApiError('picture_unavailable', 'The picture is not available.');
   return URL.createObjectURL(await response.blob());
