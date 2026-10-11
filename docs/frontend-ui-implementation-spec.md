@@ -62,6 +62,11 @@ Never infer secret object identity from route params, asset filenames, preload t
 
 ## Screen behavior details
 
+### Music
+
+- Every screen with the music button plays one looping background track ("Happy Clappy Loop" by OwlishMedia, CC0, `apps/web/src/app/assets/`) at low volume. Rounds keep the button but stay silent so music never competes with hold-to-talk or reaches a teammate's microphone.
+- Music is on by default and the button's choice is remembered on the device. Sound starts on the first tap (browser rule), and the iPhone silent switch mutes it. Implemented in `apps/web/src/app/ui/music.ts`; not yet checked on a real iPad/iPhone.
+
 ### Pick character
 
 - Show 10 avatars from the approved asset set.

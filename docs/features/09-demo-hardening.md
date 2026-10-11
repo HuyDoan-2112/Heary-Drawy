@@ -9,6 +9,7 @@ The demo runs from a laptop on the same Wi-Fi as the iPad and iPhone. No hosting
 
 - **D1:** one command starts the API and serves the web app over HTTPS on the LAN (a self-signed or locally trusted certificate is fine), allows that origin on the room socket, and prints the URL and Room passcode. It reads `DEEPSEEK_API_KEY` from the shell for AI feedback; without it rounds use the neutral result.
   Built as `npm run demo` (`scripts/demo.mjs`): a self-signed certificate via `@vitejs/plugin-basic-ssl`, `ALLOWED_ORIGINS` set to `https://<each LAN IPv4>:5173`, and `DEMO_HOST` to add an address the machine cannot see itself. On Windows WSL in NAT mode the script finds the Windows Wi-Fi address itself and prints the one-time `netsh interface portproxy` and firewall lines for an administrator PowerShell.
+  Each start closes every earlier Room in the local database before creating the new one, so a tab left open from a previous run returns to Grown-up setup instead of silently resuming the old Room. Any page load without the microphone, including a resumed session, starts at the mic screen so the iOS permission prompt comes from a tap.
 - **D4:** a short README section: start command, how to open the URL on each device (including accepting the certificate if needed), passcode entry, what to tap, and known limits.
 
 ## Demo checks

@@ -42,7 +42,7 @@ function JoinRoute() {
       });
   }, [device, session, forgetDevice]);
 
-  if (session) return <LiveGame key={session.guest_session_token} session={session} startAtMic={justJoined} onExit={exitGame} />;
+  if (session) return <LiveGame key={session.guest_session_token} session={session} justJoined={justJoined} onExit={exitGame} />;
   if (!device) {
     return (
       <DeviceSetupScreen
