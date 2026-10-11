@@ -17,7 +17,7 @@ Built in [02](features/02-rooms-and-rounds.md) plus the minimal round slice reco
 
 | Step | Deliverable | Status |
 | --- | --- | --- |
-| D1 | **Reachable from devices.** One command serves the web app over HTTPS on the LAN (iOS Safari requires HTTPS for the microphone) and allows that origin on the API socket. | Not started |
+| D1 | **Reachable from devices.** One command serves the web app over HTTPS on the LAN (iOS Safari requires HTTPS for the microphone) and allows that origin on the API socket. | Built: `npm run demo` ([09](features/09-demo-hardening.md)). Checked with two headless browsers over the LAN address; real devices in D3 |
 | D2 | **AI feedback.** Transcribe each hold-to-talk clip with Whisper on the laptop, then at Done ask DeepSeek for separate Speaker and Drawer feedback plus 1-3 team stars. Design in [06](features/06-transcription.md) and [07](features/07-feedback.md). | Not started |
 | D3 | **Real-device walkthrough.** On the actual iPad and iPhone: join, play 3 rounds in both role directions, talk while drawing, Play again, Done. Fix whatever breaks or looks wrong. Record device models/iOS versions and results in [testing.md](testing.md). | Not started |
 | D4 | **Demo script.** Short README section: start command, passcode, what to tap, known limits. | Not started |

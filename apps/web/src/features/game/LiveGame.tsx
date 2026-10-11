@@ -59,8 +59,15 @@ export function LiveGame({ session, startAtMic, onExit }: { session: GuestSessio
   const round = snapshot && 'round' in snapshot ? (snapshot as RoleFilteredSnapshot) : null;
   const teammate = round?.room.teammate ?? null;
 
+  // Voice starts only once this device has its mic: after the mic screen, or (after a reload,
+  // which skips that screen) once the browser hands the mic back. Otherwise it would connect
+  // listen-only and the partner could never hear this child.
+  const [micReady, setMicReady] = useState(false);
+  useEffect(() => {
+    if (step === 'game' && !micReady) void requestMicrophone().finally(() => setMicReady(true));
+  }, [step, micReady]);
   const voice = useVoice({
-    active: Boolean(round && teammate?.connection_status === 'connected'),
+    active: micReady && Boolean(round && teammate?.connection_status === 'connected'),
     polite: Boolean(teammate && session.player_id < teammate.player_id),
     send,
     onRelay,
