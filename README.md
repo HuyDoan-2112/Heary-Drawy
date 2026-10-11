@@ -2,7 +2,7 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: a minimal playable round runs locally - grown-up passcode join, pairing, random roles, a secret 2D picture only the Speaker sees, live drawing relay, peer-to-peer hold-to-talk voice, reveal with a neutral result, and 3 rounds with role swap. Not yet checked on a real iPad/iPhone. No hosted deployment, 3D objects, AI transcription, or AI feedback.** The current goal is a two-device iPad + iPhone demo on one Wi-Fi network, with adults only; see the [implementation plan](docs/implementation-plan.md).
+**Current state: a minimal playable round runs locally - grown-up passcode join, pairing, random roles, a secret 2D picture only the Speaker sees, live drawing relay, peer-to-peer hold-to-talk voice, local Whisper transcription of each held clip, DeepSeek feedback with 1-3 team stars at reveal (neutral result without a key), and 3 rounds with role swap. `npm run demo` serves it over HTTPS on the LAN. Not yet checked on a real iPad/iPhone. No hosted deployment or 3D objects.** The current goal is a two-device iPad + iPhone demo on one Wi-Fi network, with adults only; see the [implementation plan](docs/implementation-plan.md).
 
 ## Start here
 
@@ -12,6 +12,18 @@ A cooperative communication-practice game for children aged 5+: one teammate des
 - [Implementation plan (demo-first)](docs/implementation-plan.md)
 - [Documentation index](docs/README.md)
 - [Domain glossary](CONTEXT.md)
+
+## Run the two-device demo
+
+For one iPad and one iPhone on the same Wi-Fi as the laptop. Adults only.
+
+1. **Once per machine:** `npm install`. For AI feedback, put `DEEPSEEK_API_KEY=<your key>` in a file named `.env` next to `package.json` (git ignores it; see `.env.example`). Without a key every round shows the friendly neutral result.
+2. **Start:** `npm run demo`. It prints the address to open (`https://<laptop IP>:5173`) and the Room passcode. The first round's first clip also downloads the Whisper speech model (about 250 MB, once). Ctrl+C stops everything.
+3. **Windows with WSL only:** the devices reach Windows, not WSL. The demo prints two lines to paste into PowerShell opened with "Run as administrator". Paste them again if WSL's address changes (for example after a restart).
+4. **On each device:** open the printed address in Safari. The certificate is self-signed, so tap **Show Details**, then **visit this website**, and confirm. A grown-up enters the passcode, then the child picks a character (name optional), taps **Turn on mic**, and the grown-up taps **Allow**.
+5. **Play:** both tap **Let's play!** The Speaker sees the picture and holds **Hold to talk** to describe it without saying its name; the Drawer draws and can hold to ask questions. The Drawer taps **Done**; Drawy checks for a few seconds, then both see the picture, the drawing, their own feedback, and the team stars. **Play again** (both tap it) swaps roles; a match is 3 rounds. **Done** leaves.
+
+Known limits: both devices must be on the same Wi-Fi (no TURN relay); if a device drops, restart the round; clips are transcribed on the laptop and only text, the drawing, and the picture's checklist go to DeepSeek; the local database lives in `~/.cache/heary-drawy/local-db` (delete it to start fresh); no round timer.
 
 ## Repository layout
 
@@ -67,7 +79,7 @@ Run the web fixture shell:
 npm run dev:web
 ```
 
-For a **local, adult/synthetic-only** demo, run `npm run dev:api:local -- --room-hours 4` in another terminal; it prints a Room passcode. Open the web app on two devices or tabs, enter the passcode on each (Grown-up setup), pick characters, and play. Voice needs HTTPS (or localhost) for microphone access and both devices on the same network. This starts a local Postgres server and applies SQL migrations. It does **not** admit guests or provide a child-facing join method. `http://localhost:5173/join` remains a character-selection fixture unless a guest session has already been securely provisioned; the admission/bootstrap contract is still unresolved. Do not expose the local server to a network or use it with children. Other fixture routes remain `/mic`, `/mode`, `/team`, `/play/speaker`, `/play/drawer` (each opens with its role intro), `/checking`, `/result`, `/grownups`, and `/grownups/parents` (sample data only). Screens reproduce the approved designs in `artifact/` with a fluid layout that runs from the iPhone design on phones to the iPad design on tablets.
+For development on one machine, run `npm run dev:api:local -- --room-hours 4` (a local Postgres, migrations, and a Room passcode) and `npm run dev:web`, then open `http://localhost:5173/join` in two browser windows (one private) and enter the passcode in each. For real devices use `npm run demo` above. Do not use it with children. Other fixture routes remain `/mic`, `/mode`, `/team`, `/play/speaker`, `/play/drawer` (each opens with its role intro), `/checking`, `/result`, `/grownups`, and `/grownups/parents` (sample data only). Screens reproduce the approved designs in `artifact/` with a fluid layout that runs from the iPhone design on phones to the iPad design on tablets.
 
 For an existing Postgres instance, set `DATABASE_URL` in your shell, run `npm run db:migrate` for local/test databases (or use Supabase CLI for deployed migrations), run `npm run db:provision-room -- --ttl-hours 24` to create a server-private Room, then `npm run dev:api`. That operator command does **not** admit children or generate a Room join code/link. The default API provisions no Room. Set `ALLOWED_ORIGINS` to the comma-separated exact web origins before accepting WebSockets from other origins. Host HTTP/UI controls remain disabled pending a separate authorization decision.
 
