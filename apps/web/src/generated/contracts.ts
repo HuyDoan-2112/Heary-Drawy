@@ -19,6 +19,18 @@ export type Strokes = Stroke[];
 export type Code = string;
 export type Message = string;
 export type Retryable = boolean;
+export type AvatarId = string;
+export type Nickname = string;
+/**
+ * @minItems 3
+ * @maxItems 3
+ */
+export type ShapeCode = [string, string, string];
+export type AdmissionStatus = "admitted";
+export type ExpiresAt = string;
+export type GuestSessionToken = string;
+export type PlayerId = string;
+export type RoomId = string;
 /**
  * @minItems 1
  * @maxItems 4
@@ -34,11 +46,11 @@ export type ImageUrl = string;
 export type ModelUrl = string | null;
 export type ObjectId = string;
 export type PairId = string;
-export type AvatarId = string;
+export type AvatarId1 = string;
 export type ConnectionStatus = "connected" | "reconnecting" | "disconnected";
-export type Nickname = string;
-export type PlayerId = string;
-export type RoomId = string;
+export type Nickname1 = string;
+export type PlayerId1 = string;
+export type RoomId1 = string;
 export type Permissions = string[];
 export type RoundPhase = "role_intro" | "collaborating" | "finalizing" | "feedback" | "exploring" | "finished";
 export type PhaseVersion = number;
@@ -58,6 +70,8 @@ export type Type = string;
 export interface HearyDrawyContracts {
   drawing_snapshot: DrawingSnapshot;
   error_envelope: ErrorEnvelope;
+  join_room_request: JoinRoomRequest;
+  join_room_response: JoinRoomResponse;
   role_filtered_snapshot: RoleFilteredSnapshot;
   socket_envelope: SocketEnvelope;
 }
@@ -84,6 +98,18 @@ export interface ErrorDetail {
   code: Code;
   message: Message;
   retryable?: Retryable;
+}
+export interface JoinRoomRequest {
+  avatar_id: AvatarId;
+  nickname: Nickname;
+  shape_code: ShapeCode;
+}
+export interface JoinRoomResponse {
+  admission_status: AdmissionStatus;
+  expires_at: ExpiresAt;
+  guest_session_token: GuestSessionToken;
+  player_id: PlayerId;
+  room_id: RoomId;
 }
 export interface RoleFilteredSnapshot {
   drawing: DrawingSnapshot;
@@ -118,14 +144,14 @@ export interface ObjectAccess {
 export interface RoomSummary {
   pair_id: PairId;
   participant: PlayerSummary;
-  room_id: RoomId;
+  room_id: RoomId1;
   teammate?: PlayerSummary | null;
 }
 export interface PlayerSummary {
-  avatar_id: AvatarId;
+  avatar_id: AvatarId1;
   connection_status: ConnectionStatus;
-  nickname: Nickname;
-  player_id: PlayerId;
+  nickname: Nickname1;
+  player_id: PlayerId1;
 }
 export interface RoundSummary {
   permissions?: Permissions;

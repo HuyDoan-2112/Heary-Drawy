@@ -2,7 +2,7 @@
 
 A cooperative communication-practice game for children aged 5+: one teammate describes a private 3D object while the other draws it. They talk live using hold-to-talk buttons, and the Speaker sees the drawing develop. Each round ends with role-specific feedback and shared 3D exploration.
 
-**Current state: Feature 01 foundation is implemented. A minimal React/Vite fixture UI covers UI-01 through UI-09 screens, alongside a FastAPI health endpoint, canonical contract schemas, generated frontend types, and sanitized fixtures. No playable room, drawing relay, voice, object delivery, AI feedback, deployment, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
+**Current state: Feature 01 foundation is implemented. Fixture UI screens and a partial local Feature 02 backend prototype exist; real gameplay is not integrated. No deployable room service, drawing relay, voice, object delivery, AI feedback, provisioned infrastructure, or real-device validation exists yet.** The initial demo is an HTTPS website for one iPad and one iPhone, tested with adults/synthetic data first.
 
 ## Start here
 

@@ -1,6 +1,6 @@
 # HTTP and WebSocket contract draft
 
-Status: proposed v1 integration contract with Feature 01 canonical schemas/fixtures implemented. Later changes require coordinating the contract owner. Only `GET /health` is live; the gameplay endpoints and socket messages are not implemented.
+Status: proposed v1 integration contract with Feature 01 schemas/fixtures and a partial Feature 02 local backend prototype. Later changes require coordinating the contract owner. `GET /health`, local `POST /api/v1/rooms/join`, `GET /api/v1/rooms/{room_id}/state`, and socket authenticate/state.request are implemented. The rest of this document remains unimplemented. The default app has no provisioned Room; fixture Room creation is test-only.
 
 Related: [product](product.md), [lifecycle](round-lifecycle.md), [data model](data-model.md), [architecture](architecture.md).
 

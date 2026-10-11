@@ -66,6 +66,24 @@ class ObjectAccess(BaseModel):
     model_url: str | None = None
 
 
+class JoinRoomRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    shape_code: list[str] = Field(min_length=3, max_length=3)
+    nickname: str = Field(min_length=1, max_length=32)
+    avatar_id: str
+
+
+class JoinRoomResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    room_id: str
+    player_id: str
+    guest_session_token: str
+    expires_at: str
+    admission_status: Literal["admitted"]
+
+
 class Point(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -185,6 +203,8 @@ class ErrorEnvelope(BaseModel):
 class ContractBundle(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    join_room_request: JoinRoomRequest
+    join_room_response: JoinRoomResponse
     role_filtered_snapshot: RoleFilteredSnapshot
     drawing_snapshot: DrawingSnapshot
     socket_envelope: SocketEnvelope

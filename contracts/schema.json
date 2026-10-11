@@ -96,6 +96,72 @@
       "title": "FeedbackSnapshot",
       "type": "object"
     },
+    "JoinRoomRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "avatar_id": {
+          "title": "Avatar Id",
+          "type": "string"
+        },
+        "nickname": {
+          "maxLength": 32,
+          "minLength": 1,
+          "title": "Nickname",
+          "type": "string"
+        },
+        "shape_code": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 3,
+          "title": "Shape Code",
+          "type": "array"
+        }
+      },
+      "required": [
+        "shape_code",
+        "nickname",
+        "avatar_id"
+      ],
+      "title": "JoinRoomRequest",
+      "type": "object"
+    },
+    "JoinRoomResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_status": {
+          "const": "admitted",
+          "title": "Admission Status",
+          "type": "string"
+        },
+        "expires_at": {
+          "title": "Expires At",
+          "type": "string"
+        },
+        "guest_session_token": {
+          "title": "Guest Session Token",
+          "type": "string"
+        },
+        "player_id": {
+          "title": "Player Id",
+          "type": "string"
+        },
+        "room_id": {
+          "title": "Room Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "room_id",
+        "player_id",
+        "guest_session_token",
+        "expires_at",
+        "admission_status"
+      ],
+      "title": "JoinRoomResponse",
+      "type": "object"
+    },
     "ObjectAccess": {
       "additionalProperties": false,
       "properties": {
@@ -547,6 +613,12 @@
     "error_envelope": {
       "$ref": "#/$defs/ErrorEnvelope"
     },
+    "join_room_request": {
+      "$ref": "#/$defs/JoinRoomRequest"
+    },
+    "join_room_response": {
+      "$ref": "#/$defs/JoinRoomResponse"
+    },
     "role_filtered_snapshot": {
       "$ref": "#/$defs/RoleFilteredSnapshot"
     },
@@ -555,6 +627,8 @@
     }
   },
   "required": [
+    "join_room_request",
+    "join_room_response",
     "role_filtered_snapshot",
     "drawing_snapshot",
     "socket_envelope",
