@@ -8,6 +8,7 @@ from services.api.tests.helpers import (
     start_collaborating,
     state_of,
     unlock,
+    wait_for_phase,
     ws_authenticate,
 )
 
@@ -73,10 +74,10 @@ def test_submit_reveals_the_picture_with_a_neutral_result(client: TestClient) ->
     assert by_speaker.status_code == 403
     done = client.post(f"/api/v1/rounds/{summary['round_id']}/submit", json={**body, "command_id": "done-2"},
                        headers=bearer(drawer["guest_session_token"]))
-    assert done.json()["phase"] == "exploring"
+    assert done.json()["phase"] == "finalizing"  # Drawy is looking.
+    assert "object_access" not in state_of(client, drawer)
 
-    revealed = state_of(client, drawer)
-    assert revealed["round"]["phase"] == "exploring"
+    revealed = wait_for_phase(client, drawer, "exploring")
     assert revealed["object_access"]["object_id"] == state_of(client, speaker)["object_access"]["object_id"]
     assert revealed["feedback"]["shared_result"]["status"] == "neutral_unscored"
     assert "stars" not in revealed["feedback"]["shared_result"]

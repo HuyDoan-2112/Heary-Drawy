@@ -1,12 +1,15 @@
 import asyncio
 import json
+import logging
 import os
-from collections.abc import Callable
+import tempfile
+from collections.abc import AsyncIterator, Callable, Coroutine
+from contextlib import asynccontextmanager
 from typing import Annotated, Any
 from uuid import uuid4
 
 import anyio
-from fastapi import Depends, FastAPI, Header, WebSocket, WebSocketDisconnect
+from fastapi import Depends, FastAPI, Header, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from starlette.concurrency import run_in_threadpool
@@ -24,10 +27,14 @@ from services.api.app.contracts.schemas import (
     PlayAgainResponse,
     SubmitDrawingResponse,
 )
+from services.api.app.game.feedback import ask_deepseek, render_png
 from services.api.app.game.store import CommandOutcome, GameError, GameStore
+from services.api.app.game.transcribe import transcribe_file
 from services.api.app.realtime import Connection, ConnectionHub
 
 DEFAULT_ALLOWED_ORIGINS = ("http://localhost:5173", "http://127.0.0.1:5173")
+MAX_CLIP_BYTES = 2 * 1024 * 1024  # About a minute of compressed speech.
+logger = logging.getLogger("heary_drawy.api")
 
 
 def bearer_token(authorization: Annotated[str | None, Header()] = None) -> str:
@@ -67,16 +74,65 @@ def allowed_origins_from_env() -> tuple[str, ...]:
     return origins or DEFAULT_ALLOWED_ORIGINS
 
 
-def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, ...] | None = None) -> FastAPI:
-    """Build the API. The database must already be migrated (see supabase/migrations)."""
+def create_app(
+    database_url: str | None = None,
+    *,
+    allowed_origins: tuple[str, ...] | None = None,
+    transcribe: Callable[[str], str] = transcribe_file,
+    ask_ai: Callable[..., dict[str, Any] | None] = ask_deepseek,
+    clip_grace_seconds: float = 1.0,
+    clip_wait_seconds: float = 15.0,
+) -> FastAPI:
+    """Build the API. The database must already be migrated (see supabase/migrations).
+
+    `transcribe` and `ask_ai` default to local Whisper and DeepSeek; tests pass stand-ins.
+    """
     url = database_url or os.environ.get("DATABASE_URL")
     if not url:
         raise RuntimeError("DATABASE_URL is required")
     origins = frozenset(allowed_origins if allowed_origins is not None else allowed_origins_from_env())
-
-    app = FastAPI(title="Heary Drawy API", version="0.1.0")
     store = GameStore(url)
     hub = ConnectionHub(store)
+    background: set[asyncio.Task[None]] = set()
+
+    def spawn(work: Coroutine[Any, Any, None]) -> None:
+        task = asyncio.create_task(work)
+        background.add(task)
+        task.add_done_callback(background.discard)
+
+    async def transcribe_clip(clip_id: str, audio: bytes, suffix: str) -> None:
+        """Whisper turns the clip into text; the audio file is deleted right after."""
+        text: str | None = None
+        with tempfile.NamedTemporaryFile(suffix=suffix) as file:
+            file.write(audio)
+            file.flush()
+            try:
+                text = await run_in_threadpool(transcribe, file.name)
+            except Exception as exc:  # noqa: BLE001 - a bad clip must never stop the round.
+                logger.info("clip transcription failed: %s", type(exc).__name__)
+        await run_in_threadpool(store.finish_clip, clip_id, text)
+
+    async def check_round(round_id: str) -> None:
+        """Drawy is looking: wait briefly for the last clips, ask the AI once, then reveal."""
+        await asyncio.sleep(clip_grace_seconds)  # A clip released together with Done is still uploading.
+        deadline = asyncio.get_running_loop().time() + clip_wait_seconds
+        while await run_in_threadpool(store.pending_clips, round_id) and asyncio.get_running_loop().time() < deadline:
+            await asyncio.sleep(0.5)
+        result = None
+        data = await run_in_threadpool(store.feedback_input, round_id)
+        if data:
+            png = await run_in_threadpool(render_png, data["strokes"])
+            result = await run_in_threadpool(ask_ai, data["name"], data["features"], data["transcript"], png)
+        await hub.push_snapshots(await run_in_threadpool(store.publish_result, round_id, result))
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        # A restart mid-check would leave a round on the checking screen; finish those first.
+        for round_id in await run_in_threadpool(store.rounds_in_finalizing):
+            spawn(check_round(round_id))
+        yield
+
+    app = FastAPI(title="Heary Drawy API", version="0.1.0", lifespan=lifespan)
     app.state.game_store = store
 
     @app.exception_handler(GameError)
@@ -152,7 +208,22 @@ def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, .
 
     @app.post("/api/v1/rounds/{round_id}/submit", response_model=SubmitDrawingResponse)
     async def submit(round_id: str, request: IntroSeenRequest, token: Annotated[str, Depends(bearer_token)]) -> dict[str, Any]:
-        return await run_round_command(store.submit_drawing, token, round_id, request)
+        response = await run_round_command(store.submit_drawing, token, round_id, request)
+        spawn(check_round(round_id))
+        return response
+
+    @app.post("/api/v1/rounds/{round_id}/clips", status_code=202)
+    async def upload_clip(round_id: str, request: Request, token: Annotated[str, Depends(bearer_token)]) -> dict[str, str]:
+        """One hold-to-talk clip, sent after release. Partner audio never waits for this."""
+        if int(request.headers.get("content-length") or 0) > MAX_CLIP_BYTES:
+            raise GameError("payload_invalid", "That clip is too long.", 422)
+        audio = await request.body()
+        if not audio or len(audio) > MAX_CLIP_BYTES:
+            raise GameError("payload_invalid", "That clip could not be used.", 422)
+        clip_id = await run_in_threadpool(store.add_clip, token, round_id)
+        suffix = ".webm" if "webm" in request.headers.get("content-type", "") else ".mp4"
+        spawn(transcribe_clip(clip_id, audio, suffix))
+        return {"clip_id": clip_id}
 
     @app.get("/api/v1/rounds/{round_id}/picture")
     async def picture(round_id: str, token: Annotated[str, Depends(bearer_token)]) -> Response:
@@ -217,6 +288,8 @@ def create_app(database_url: str | None = None, *, allowed_origins: tuple[str, .
             }
         )
         await hub.push_snapshots(outcome.notify_player_ids)
+        if message_type == "round.submit" and outcome.notify_player_ids:
+            spawn(check_round(command.round_id))
 
     @app.websocket("/api/v1/rooms/{room_id}/socket")
     async def room_socket(websocket: WebSocket, room_id: str) -> None:

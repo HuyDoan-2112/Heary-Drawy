@@ -102,6 +102,15 @@ export async function leaveRoom(session: GuestSession): Promise<void> {
   }
 }
 
+/** Upload one hold-to-talk clip for transcription. Best effort: a lost clip never blocks the round. */
+export async function uploadClip(session: GuestSession, roundId: string, clip: Blob): Promise<void> {
+  await fetch(`/api/v1/rounds/${encodeURIComponent(roundId)}/clips`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${session.guest_session_token}`, 'Content-Type': clip.type || 'audio/mp4' },
+    body: clip,
+  }).catch(() => undefined);
+}
+
 /** Load a picture the server authorized for this child, as a local object URL. */
 export async function fetchPicture(session: GuestSession, url: string): Promise<string> {
   const response = await fetch(url, { headers: { Authorization: `Bearer ${session.guest_session_token}` } });

@@ -4,6 +4,7 @@
 //
 //   npm run demo                      # Room lasts 8 hours
 //   DEMO_HOST=192.168.1.20 npm run demo   # add an address this machine cannot see itself (e.g. WSL)
+//   DEEPSEEK_API_KEY in .env (git-ignored) turns on AI feedback; Whisper runs locally either way.
 //
 // Adults and synthetic data only. Ctrl+C stops everything.
 import { spawn } from 'node:child_process';
@@ -12,6 +13,13 @@ import { fileURLToPath } from 'node:url';
 
 const PORT = 5173;
 const root = fileURLToPath(new URL('..', import.meta.url));
+
+// Secrets such as DEEPSEEK_API_KEY live in the git-ignored .env file next to package.json.
+try {
+  process.loadEnvFile(`${root}.env`);
+} catch {
+  // No .env: AI feedback stays off and rounds show the neutral result.
+}
 
 const lanAddresses = Object.values(networkInterfaces())
   .flat()

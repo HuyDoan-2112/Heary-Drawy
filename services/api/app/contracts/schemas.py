@@ -151,12 +151,12 @@ class IntroSeenResponse(BaseModel):
 
 
 class SubmitDrawingResponse(BaseModel):
-    """The Drawer tapped Done. Without AI scoring the round goes straight to the neutral result."""
+    """The Drawer tapped Done. The round waits in finalizing while Drawy checks it, then reveals."""
 
     model_config = ConfigDict(extra="forbid")
 
     round_id: str
-    phase: Literal["exploring"]
+    phase: Literal["finalizing"]
     phase_version: int
 
 

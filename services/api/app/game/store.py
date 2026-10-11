@@ -229,6 +229,7 @@ class GameStore:
             for statement in (
                 f"delete from commands where player_id in ({player_ids})",
                 f"delete from intro_seen where round_id in ({round_ids})",
+                f"delete from clips where round_id in ({round_ids})",
                 f"delete from play_again_intents where round_id in ({round_ids})",
                 "update pairs set current_round_id = null where room_id = any(%(rooms)s)",
                 f"delete from rounds where pair_id in ({pair_ids})",
@@ -681,9 +682,17 @@ class GameStore:
                 image_url=f"/api/v1/rounds/{round_row['round_id']}/picture",
             )
         if phase in REVEALED_PHASES:
+            result = round_row["result"]
+            if result:
+                # AI feedback (D2): each child gets their own lines; the stars are shared.
+                lines = result[f"{role.value}_lines"]
+                shared = SharedResult(status=ResultStatus.scored, stars=result["stars"], child_summary=lines[0])
+            else:
+                lines = list(NEUTRAL_RESULT_LINES)
+                shared = SharedResult(status=ResultStatus.neutral_unscored, child_summary=lines[0])
             fields["feedback"] = FeedbackSnapshot(
-                shared_result=SharedResult(status=ResultStatus.neutral_unscored, child_summary=NEUTRAL_RESULT_LINES[0]),
-                role_feedback=RoleFeedback(role=role, lines=list(NEUTRAL_RESULT_LINES)),
+                shared_result=shared,
+                role_feedback=RoleFeedback(role=role, lines=lines),
                 sticker_id=item.object_id if item else "star",
             )
         return fields
@@ -753,12 +762,82 @@ class GameStore:
     def _apply_submit(self, db: psycopg.Connection, row: dict[str, Any], player: dict[str, Any]) -> dict[str, Any]:
         if row["drawer_player_id"] != player["player_id"]:
             raise GameError("not_authorized", "Only the drawer can finish the drawing.", 403)
-        # No AI scoring in the demo: finalizing resolves straight to the neutral result.
-        version = row["phase_version"]
-        for to_phase in (RoundPhase.finalizing, RoundPhase.feedback, RoundPhase.exploring):
-            version = self._advance(db, {**row, "phase_version": version}, to_phase)
-            row = {**row, "phase": to_phase.value}
-        return {"round_id": row["round_id"], "phase": RoundPhase.exploring.value, "phase_version": version}
+        # The round waits in finalizing ("Drawy is looking") until publish_result.
+        version = self._advance(db, row, RoundPhase.finalizing)
+        return {"round_id": row["round_id"], "phase": RoundPhase.finalizing.value, "phase_version": version}
+
+    # ------------------------------------------------------- clips and feedback (D2)
+
+    def add_clip(self, token: str, round_id: str) -> str:
+        """Record a pending clip for a child of this round. Clips released just after Done still count."""
+        _session, player = self.authenticate(token)
+        with self._tx() as db:
+            row = db.execute(
+                "select r.* from rounds r join pair_members m on m.pair_id = r.pair_id "
+                "where r.round_id = %s and m.player_id = %s",
+                (round_id, player["player_id"]),
+            ).fetchone()
+            if row is None:
+                raise GameError("not_authorized", "That round is not available.", 403)
+            if row["phase"] not in (RoundPhase.collaborating.value, RoundPhase.finalizing.value):
+                raise GameError("wrong_phase", "Talking is not open right now.", 409)
+            role = Role.speaker if row["speaker_player_id"] == player["player_id"] else Role.drawer
+            clip_id = f"clip_{uuid4().hex}"
+            db.execute(
+                "insert into clips(clip_id, round_id, player_id, role, status) values (%s, %s, %s, %s, 'pending')",
+                (clip_id, round_id, player["player_id"], role.value),
+            )
+        return clip_id
+
+    def finish_clip(self, clip_id: str, text: str | None) -> None:
+        """Store the transcript, or mark the clip failed. The audio itself is never stored."""
+        with self._tx() as db:
+            db.execute(
+                "update clips set status = %s, text = %s where clip_id = %s",
+                ("done" if text else "failed", text or None, clip_id),
+            )
+
+    def pending_clips(self, round_id: str) -> int:
+        with self._tx() as db:
+            return db.execute(
+                "select count(*) as n from clips where round_id = %s and status = 'pending'", (round_id,)
+            ).fetchone()["n"]
+
+    def feedback_input(self, round_id: str) -> dict[str, Any] | None:
+        """What the AI needs for a round in finalizing: picture, strokes, and transcripts in order."""
+        with self._tx() as db:
+            row = db.execute("select phase, object_id, strokes from rounds where round_id = %s", (round_id,)).fetchone()
+            if row is None or row["phase"] != RoundPhase.finalizing.value:
+                return None
+            clips = db.execute(
+                "select role, text from clips where round_id = %s and status = 'done' order by created_at", (round_id,)
+            ).fetchall()
+        item = BY_ID.get(row["object_id"] or "")
+        return {
+            "name": item.display_name if item else "",
+            "features": item.features if item else (),
+            "strokes": row["strokes"],
+            "transcript": [(clip["role"], clip["text"]) for clip in clips],
+        }
+
+    def rounds_in_finalizing(self) -> list[str]:
+        with self._tx() as db:
+            rows = db.execute("select round_id from rounds where phase = %s", (RoundPhase.finalizing.value,)).fetchall()
+        return [row["round_id"] for row in rows]
+
+    def publish_result(self, round_id: str, result: dict[str, Any] | None) -> tuple[str, ...]:
+        """Save the AI result (None = neutral) and reveal. Returns the pair to notify; empty if already done."""
+        with self._tx() as db:
+            row = db.execute("select * from rounds where round_id = %s for update", (round_id,)).fetchone()
+            if row is None or row["phase"] != RoundPhase.finalizing.value:
+                return ()
+            db.execute("update rounds set result = %s where round_id = %s", (Jsonb(result) if result else None, round_id))
+            version = row["phase_version"]
+            for to_phase in (RoundPhase.feedback, RoundPhase.exploring):
+                version = self._advance(db, {**row, "phase_version": version}, to_phase)
+                row = {**row, "phase": to_phase.value}
+            members = db.execute("select player_id from pair_members where pair_id = %s order by seat", (row["pair_id"],))
+            return tuple(member["player_id"] for member in members)
 
     # ---------------------------------------------------------------- helpers
 
