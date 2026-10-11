@@ -175,6 +175,9 @@ def test_deepseek_reply_is_validated_and_bad_replies_fall_back(monkeypatch: pyte
     monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
     monkeypatch.setattr(feedback, "OpenAI", fake_openai(json.dumps(good)))
     assert ask_deepseek(*args) == {"stars": 3, "speaker_lines": ["You described the color!"], "drawer_lines": ["You drew it red!"]}
+    dashed = {**good, "drawer_lines": ["You made bold red lines \u2014 great listening!"]}
+    monkeypatch.setattr(feedback, "OpenAI", fake_openai(json.dumps(dashed)))
+    assert ask_deepseek(*args)["drawer_lines"] == ["You made bold red lines - great listening!"]
     for bad in ("", "not json", json.dumps({**good, "speaker_lines": []}), json.dumps({"features": "all"})):
         monkeypatch.setattr(feedback, "OpenAI", fake_openai(bad))
         assert ask_deepseek(*args) is None
