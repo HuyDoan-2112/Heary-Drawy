@@ -1,5 +1,6 @@
 import type { DetailedHTMLProps, HTMLAttributes } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { loadModelViewer } from './modelViewer';
 
 declare module 'react' {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -24,9 +25,9 @@ declare module 'react' {
 }
 
 /**
- * The Speaker's secret object as a 3D model to spin and pinch-zoom. The picture shows while the
- * 3D library and model load, and stays if either fails. The library loads only here, so other
- * screens never download it.
+ * The secret object as a 3D model to spin and pinch-zoom: the Speaker's during the round, both
+ * players' from Reveal. The picture shows while the 3D library and model load, and stays if
+ * either fails.
  */
 export function SecretModel({ modelSrc, pictureSrc, label }: { modelSrc: string | null; pictureSrc: string | null; label: string }) {
   const [viewerReady, setViewerReady] = useState(false);
@@ -35,7 +36,7 @@ export function SecretModel({ modelSrc, pictureSrc, label }: { modelSrc: string 
 
   useEffect(() => {
     let live = true;
-    import('@google/model-viewer')
+    loadModelViewer()
       .then(() => live && setViewerReady(true))
       .catch(() => live && setFailed(true));
     return () => {

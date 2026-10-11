@@ -5,6 +5,7 @@ import { MicScreen, ModeScreen, TeamScreen } from '../../app/screens/JoinFlow';
 import { DrawerPlayView, SpeakerPlayView } from '../../app/screens/Play';
 import { ArrowIcon, HomeIcon } from '../../app/ui/icons';
 import { SecretModel } from '../../app/ui/model';
+import { loadModelViewer } from '../../app/ui/modelViewer';
 import type { RoleFilteredSnapshot } from '../../generated/contracts';
 import { fetchSecretFile, leaveRoom, uploadClip, type GuestSession } from '../rooms/api';
 import { useRoomConnection, type RoomSnapshot } from '../rooms/useRoomConnection';
@@ -79,6 +80,12 @@ export function LiveGame({ session, justJoined, onExit }: { session: GuestSessio
   const roundPhase = round?.round.phase;
   const showModel = (round?.round.role === 'speaker' && roundPhase === 'collaborating') || roundPhase === 'exploring';
   const modelSrc = useSecretFile(session, showModel ? access?.model_url : null);
+  // The 3D library is not secret, so both devices load it as the round starts; otherwise the
+  // Drawer's Reveal shows only the flat picture for seconds while it downloads.
+  const inRound = round !== null;
+  useEffect(() => {
+    if (inRound) loadModelViewer().catch(() => undefined);
+  }, [inRound]);
 
   useEffect(() => {
     if (connection === 'ended') onExit();

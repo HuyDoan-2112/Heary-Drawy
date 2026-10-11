@@ -173,6 +173,28 @@ describe('LiveGame', () => {
     expect(screen.getByRole('heading', { name: 'Great teamwork!' })).toBeInTheDocument();
   });
 
+  it('loads the 3D library on the drawer during the round, so the reveal does not wait for it', async () => {
+    // A fresh module graph, so this test sees the library load even if an earlier test loaded it.
+    vi.resetModules();
+    const libraryLoaded = vi.fn();
+    vi.doMock('@google/model-viewer', () => {
+      libraryLoaded();
+      return {};
+    });
+    const { LiveGame: FreshLiveGame } = await import('./LiveGame');
+    const { MusicProvider: FreshMusicProvider } = await import('../../app/ui/frame');
+    const fetchMock = stubSecretFiles();
+    render(<FreshMusicProvider><FreshLiveGame session={session} justJoined={false} onExit={vi.fn()} /></FreshMusicProvider>);
+    const socket = FakeWebSocket.latest;
+    act(() => socket.open());
+    act(() => socket.receive({ protocol_version: 1, type: 'session.authenticated', payload: {} }));
+
+    act(() => socket.receive(snapshotMessage({ phase: 'collaborating', role: 'drawer' })));
+
+    await waitFor(() => expect(libraryLoaded).toHaveBeenCalled());
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('shows the neutral result with Play again, and Done leaves the room', async () => {
     const fetchMock = vi.fn(async () => new Response('{"status":"left"}'));
     vi.stubGlobal('fetch', fetchMock);
