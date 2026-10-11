@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { useState } from 'react';
 import { characterOptions, type AvatarId } from '../fixtures';
 import { Avatar, Clouds, Drawy, MusicButton, Page } from '../ui/frame';
@@ -67,13 +67,15 @@ export function PickCharacterScreen({ takenAvatarIds, onGo }: PickCharacterProps
       <Drawy pose="curiousMirrored" className="pick-drawy bob" />
       <h1 className="page-title pick-title">Who are you?</h1>
       <div className="character-grid">
-        {characterOptions.map((character) => {
+        {characterOptions.map((character, index) => {
           const picked = isTaken(character.id);
           return (
             <button
               key={character.id}
               type="button"
               className="character-tile"
+              // Each character idles at its own rhythm (see .character-tile in styles.css).
+              style={{ '--i': index } as CSSProperties}
               data-selected={current === character.id}
               data-picked={picked}
               aria-label={picked ? `${character.name}, a friend already picked this` : `I am ${character.name}`}
