@@ -6,6 +6,9 @@ import { App } from './App';
 import { neutralResult } from './fixtures';
 import { ResultScreen } from './screens/Finish';
 import { MusicProvider } from './ui/frame';
+import { setMusicPlaying } from './ui/music';
+
+vi.mock('./ui/music', () => ({ setMusicPlaying: vi.fn(), unlockMusic: vi.fn() }));
 
 function renderAt(path: string) {
   window.history.pushState({}, '', path);
@@ -27,6 +30,8 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   window.sessionStorage.clear();
+  window.localStorage.clear();
+  vi.mocked(setMusicPlaying).mockClear();
 });
 
 describe('approved screen flow', () => {
@@ -196,6 +201,28 @@ describe('approved screen flow', () => {
 
     await user.click(screen.getByRole('link', { name: 'Turn on mic' }));
     expect(screen.getByRole('button', { name: 'Music on or off' })).toHaveAttribute('aria-pressed', 'false');
+    expect(setMusicPlaying).toHaveBeenLastCalledWith(false);
+  });
+
+  it('plays music on menu screens and remembers turning it off on this device', async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderAt('/mic');
+    expect(setMusicPlaying).toHaveBeenLastCalledWith(true);
+
+    await user.click(screen.getByRole('button', { name: 'Music on or off' }));
+    expect(setMusicPlaying).toHaveBeenLastCalledWith(false);
+    unmount();
+
+    renderAt('/mic');
+    expect(screen.getByRole('button', { name: 'Music on or off' })).toHaveAttribute('aria-pressed', 'false');
+    expect(setMusicPlaying).not.toHaveBeenLastCalledWith(true);
+  });
+
+  it('keeps rounds quiet so music never competes with hold-to-talk', () => {
+    renderAt('/play/speaker');
+
+    expect(screen.getByRole('button', { name: 'Music on or off' })).toHaveAttribute('aria-pressed', 'true');
+    expect(setMusicPlaying).not.toHaveBeenCalledWith(true);
   });
 
   it('opens the sample parent area only after a 3 second grown-up hold', async () => {
